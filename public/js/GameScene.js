@@ -288,7 +288,80 @@ class GameScene extends Phaser.Scene {
             });
         });
         
+        // Create character status UI at bottom of screen
+        this.createCharacterStatusUI();
+        
         Logger.log('Local 2-player setup complete with physics');
+    }
+    
+    // Update character status indicators
+    updateCharacterStatusUI() {
+        if (!this.characterStatusDisplays || !this.localPlayers) return;
+        
+        Object.keys(this.characterStatusDisplays).forEach(playerId => {
+            const playerData = this.localPlayers[playerId];
+            const statusDisplay = this.characterStatusDisplays[playerId];
+            
+            if (!playerData || !statusDisplay) return;
+            
+            // Update damage percentage
+            statusDisplay.damageText.setText(`${playerData.health}%`);
+            
+            // Color code damage based on percentage
+            let damageColor = '#FFFFFF';
+            if (playerData.health >= 100) {
+                damageColor = '#FF0000'; // Red for high damage
+            } else if (playerData.health >= 50) {
+                damageColor = '#FFFF00'; // Yellow for medium damage
+            }
+            statusDisplay.damageText.setStyle({ fill: damageColor });
+            
+            // Update shield bar
+            const shieldPercentage = Math.max(0, playerData.shieldHealth) / 100;
+            const shieldBarWidth = 100;
+            const currentShieldWidth = shieldBarWidth * shieldPercentage;
+            
+            statusDisplay.shieldFill.setSize(currentShieldWidth, 8);
+            
+            // Change shield color based on health
+            let shieldColor = 0x00FFFF; // Cyan for healthy shield
+            if (playerData.shieldHealth <= 0) {
+                shieldColor = 0xFF0000; // Red for broken shield
+            } else if (playerData.shieldHealth <= 30) {
+                shieldColor = 0xFFFF00; // Yellow for low shield
+            }
+            statusDisplay.shieldFill.setFillStyle(shieldColor);
+            
+            // Update lives
+            statusDisplay.livesText.setText(`Lives: ${playerData.lives}`);
+            
+            // Color code lives
+            let livesColor = '#00FF00'; // Green for healthy
+            if (playerData.lives <= 1) {
+                livesColor = '#FF0000'; // Red for critical
+            } else if (playerData.lives <= 2) {
+                livesColor = '#FFFF00'; // Yellow for warning
+            }
+            statusDisplay.livesText.setStyle({ fill: livesColor });
+            
+            // Update portrait opacity for eliminated players
+            if (playerData.eliminated) {
+                statusDisplay.portrait.setAlpha(0.3);
+                statusDisplay.nameText.setAlpha(0.3);
+                statusDisplay.damageText.setText('OUT');
+                statusDisplay.damageText.setStyle({ fill: '#FF0000' });
+            } else {
+                statusDisplay.portrait.setAlpha(1);
+                statusDisplay.nameText.setAlpha(1);
+            }
+            
+            // Show blocking indicator on portrait
+            if (playerData.isBlocking) {
+                statusDisplay.portrait.setStrokeStyle(3, 0x00FFFF);
+            } else {
+                statusDisplay.portrait.setStrokeStyle(3, 0xFFFFFF);
+            }
+        });
     }
     
     handlePlayerJump(playerId) {
@@ -980,6 +1053,9 @@ class GameScene extends Phaser.Scene {
         if (this.localPlayers) {
             this.localPlayers.player1.lives = 3;
             this.localPlayers.player1.health = 0;
+            this.localPlayers.player1.shieldHealth = 100;
+            this.localPlayers.player1.shieldRegenTime = 0;
+            this.localPlayers.player1.isBlocking = false;
             this.localPlayers.player1.x = 300;
             this.localPlayers.player1.y = 200;
             this.localPlayers.player1.velocityX = 0;
@@ -990,6 +1066,9 @@ class GameScene extends Phaser.Scene {
             
             this.localPlayers.player2.lives = 3;
             this.localPlayers.player2.health = 0;
+            this.localPlayers.player2.shieldHealth = 100;
+            this.localPlayers.player2.shieldRegenTime = 0;
+            this.localPlayers.player2.isBlocking = false;
             this.localPlayers.player2.x = 500;
             this.localPlayers.player2.y = 200;
             this.localPlayers.player2.velocityX = 0;
@@ -1010,6 +1089,8 @@ class GameScene extends Phaser.Scene {
                     player.healthText.setStyle({ fill: '#fff' });
                     player.livesText.setText('Lives: 3');
                     player.livesText.setStyle({ fill: '#00FF00' });
+                    player.shieldText.setText('Shield: 100%');
+                    player.blockIndicator.setAlpha(0);
                     
                     // Hide fall warnings
                     if (player.fallWarning) {
@@ -1039,6 +1120,13 @@ class GameScene extends Phaser.Scene {
             this.gameOverElements = null;
         }
         
+        // Clean up character status UI
+        if (this.statusUI) {
+            this.statusUI.destroy();
+            this.statusUI = null;
+        }
+        this.characterStatusDisplays = {};
+        
         // Stop the game scene and go to menu
         this.scene.start('MenuScene');
     }
@@ -1056,6 +1144,13 @@ class GameScene extends Phaser.Scene {
             });
             this.gameOverElements = null;
         }
+        
+        // Clean up character status UI
+        if (this.statusUI) {
+            this.statusUI.destroy();
+            this.statusUI = null;
+        }
+        this.characterStatusDisplays = {};
         
         // Go to character select with same game mode
         this.scene.start('CharacterSelectScene', { mode: this.mode });
@@ -1096,6 +1191,110 @@ class GameScene extends Phaser.Scene {
         ];
         
         Logger.log('Stage created with', this.platforms.length, 'platforms');
+    }
+    
+    // Create character status indicators at bottom of screen
+    createCharacterStatusUI() {
+        Logger.log('Creating character status UI');
+        
+        // Create UI container
+        this.statusUI = this.add.group();
+        
+        // Create background bar for status indicators
+        const statusBarHeight = 80;
+        const statusBar = this.add.rectangle(400, 600 - statusBarHeight/2, 800, statusBarHeight, 0x000000);
+        statusBar.setAlpha(0.7);
+        statusBar.setStrokeStyle(2, 0x444444);
+        statusBar.setDepth(1000); // Set high depth to appear above other elements
+        this.statusUI.add(statusBar);
+        
+        // Initialize character status displays
+        this.characterStatusDisplays = {};
+        
+        // Get active players
+        const activePlayers = Object.keys(this.localPlayers || {});
+        
+        activePlayers.forEach((playerId, index) => {
+            const playerData = this.localPlayers[playerId];
+            if (!playerData) return;
+            
+            // Calculate position for each character status
+            const baseX = 200 + (index * 400); // Space them out across the screen
+            const baseY = 600 - statusBarHeight/2;
+            
+            // Create character portrait/icon
+            const portrait = this.add.rectangle(baseX - 120, baseY, 60, 60, playerData.color);
+            portrait.setStrokeStyle(3, 0xFFFFFF);
+            
+            // Add character name
+            const nameText = this.add.text(baseX - 120, baseY - 35, playerData.characterName || `Player ${index + 1}`, {
+                fontSize: '12px',
+                fill: '#FFFFFF',
+                fontStyle: 'bold'
+            }).setOrigin(0.5);
+            
+            // Add damage percentage
+            const damageText = this.add.text(baseX - 40, baseY - 15, `${playerData.health}%`, {
+                fontSize: '24px',
+                fill: '#FFFFFF',
+                fontStyle: 'bold'
+            }).setOrigin(0.5);
+            
+            // Add shield status bar
+            const shieldBarWidth = 100;
+            const shieldBarHeight = 8;
+            
+            // Shield background
+            const shieldBg = this.add.rectangle(baseX + 40, baseY - 5, shieldBarWidth, shieldBarHeight, 0x333333);
+            shieldBg.setStrokeStyle(1, 0x666666);
+            
+            // Shield fill
+            const shieldFill = this.add.rectangle(baseX + 40, baseY - 5, shieldBarWidth, shieldBarHeight, 0x00FFFF);
+            shieldFill.setOrigin(0.5);
+            
+            // Shield text
+            const shieldText = this.add.text(baseX + 40, baseY + 10, 'Shield', {
+                fontSize: '10px',
+                fill: '#CCCCCC'
+            }).setOrigin(0.5);
+            
+            // Add lives indicator
+            const livesText = this.add.text(baseX + 40, baseY + 25, `Lives: ${playerData.lives}`, {
+                fontSize: '12px',
+                fill: '#FFFFFF'
+            }).setOrigin(0.5);
+            
+            // Store all UI elements for this player
+            this.characterStatusDisplays[playerId] = {
+                portrait: portrait,
+                nameText: nameText,
+                damageText: damageText,
+                shieldBg: shieldBg,
+                shieldFill: shieldFill,
+                shieldText: shieldText,
+                livesText: livesText
+            };
+            
+            // Add to UI group
+            this.statusUI.add(portrait);
+            this.statusUI.add(nameText);
+            this.statusUI.add(damageText);
+            this.statusUI.add(shieldBg);
+            this.statusUI.add(shieldFill);
+            this.statusUI.add(shieldText);
+            this.statusUI.add(livesText);
+            
+            // Set depth for all elements to appear above game elements
+            portrait.setDepth(1001);
+            nameText.setDepth(1001);
+            damageText.setDepth(1001);
+            shieldBg.setDepth(1001);
+            shieldFill.setDepth(1001);
+            shieldText.setDepth(1001);
+            livesText.setDepth(1001);
+        });
+        
+        Logger.log('Character status UI created for', activePlayers.length, 'players');
     }
 
     updateGameState(gameState) {
@@ -1378,6 +1577,9 @@ class GameScene extends Phaser.Scene {
             
             playerList.appendChild(playerInfo);
         });
+        
+        // Update character status indicators
+        this.updateCharacterStatusUI();
     }
 
     getHealthColor(health) {
@@ -1530,5 +1732,8 @@ class GameScene extends Phaser.Scene {
         if (this.inputManager) {
             this.inputManager.update();
         }
+
+        // Update character status indicators
+        this.updateCharacterStatusUI();
     }
 } 

@@ -168,8 +168,10 @@ class GameScene extends Phaser.Scene {
         this.player2Keys = {
             left: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.J),
             right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.L),
-            up: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.I),
-            jump: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K),
+            jump: [
+                this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.I),
+                this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K)
+            ],
             attack: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.O)
         };
         
@@ -189,8 +191,11 @@ class GameScene extends Phaser.Scene {
             this.handlePlayerJump('player1');
         });
         
-        this.player2Keys.jump.on('down', () => {
-            this.handlePlayerJump('player2');
+        // Set up Player 2 jump events for both I and K
+        this.player2Keys.jump.forEach(jumpKey => {
+            jumpKey.on('down', () => {
+                this.handlePlayerJump('player2');
+            });
         });
         
         Logger.log('Local 2-player setup complete with physics');

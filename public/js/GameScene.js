@@ -292,9 +292,9 @@ class GameScene extends Phaser.Scene {
         } else if (playerData.isDodging) {
             targetAnimation = 'meow-knight-dodge';
         } else if (playerData.isBlocking) {
-            targetAnimation = 'meow-knight-idle'; // Stay still when blocking
+            targetAnimation = 'STOP_ANIMATION'; // Stop animation when blocking
         } else if (!playerData.isGrounded) {
-            targetAnimation = 'meow-knight-idle'; // No jump animation, move naturally
+            targetAnimation = 'STOP_ANIMATION'; // Stop animation when jumping
         } else if (Math.abs(playerData.velocityX) > 50) {
             // Character is moving fast enough to run
             targetAnimation = 'meow-knight-run';
@@ -310,7 +310,11 @@ class GameScene extends Phaser.Scene {
         const currentAnimKey = sprite.anims.currentAnim?.key;
         const isCurrentlyPlaying = sprite.anims.isPlaying;
         
-        if (currentAnimKey !== targetAnimation) {
+        if (targetAnimation === 'STOP_ANIMATION') {
+            // Stop all animations and hold on frame 0 of idle
+            sprite.anims.stop();
+            sprite.setFrame(0); // Set to first frame of idle animation
+        } else if (currentAnimKey !== targetAnimation) {
             // Different animation requested, play it
             sprite.play(targetAnimation);
         } else if (targetAnimation.includes('attack') && isCurrentlyPlaying) {

@@ -27,7 +27,18 @@
 - [x] Demo branch created (identical to main initially)
 
 ### Commit History
+- **a8fa6a9** (2024-12-XX): feat: Add up arrow key as additional jump control for Player 1
+- **eaabe6a** (2024-12-XX): feat: Add W and I keys as additional jump controls
+- **0ccd34f** (2024-12-XX): feat: Add gravity and proper jumping mechanics
+- **bb6a87d** (2024-12-XX): docs: Update README with 2-player controls and Git workflow
+- **d3b84d8** (2024-12-XX): docs: Add Git workflow documentation
 - **abf821a** (2024-12-XX): Initial commit - Super Smash Clone with 2-player local mode
+
+### Latest Demo Branch Update
+- **Date**: 2024-12-XX
+- **Action**: Merged all changes from main to demo branch
+- **Result**: Both branches now synchronized at commit a8fa6a9
+- **Features**: Complete 2-player game with physics, gravity, and multiple jump controls
 
 ## Usage Commands
 
@@ -76,4 +87,4 @@ When ready to push to a remote repository:
 - Both branches currently contain identical code
 - All future development will happen on **main**
 - Demo branch will only be updated when user requests it
-- This ensures demo always contains stable, tested versions 
+- This ensures demo always contains stable, tested versions

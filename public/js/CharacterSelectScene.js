@@ -118,9 +118,9 @@ class CharacterSelectScene extends Phaser.Scene {
             
             let preview;
             
-            // Create character preview (static image for red-fighter, rectangle for others)
+            // Create character preview (static image for red-fighter only, rectangle for others)
             let border = null;
-            if (character.hasSprite) {
+            if (character.hasSprite && character.id === 'red-fighter') {
                 preview = this.add.image(x, y, 'meow-knight-preview');
                 preview.setScale(4); // Scale up for better visibility
                 preview.setTint(0xFFAAAA); // Light red tint to match character color
@@ -255,7 +255,7 @@ class CharacterSelectScene extends Phaser.Scene {
             const display = this.characterDisplays[i];
             
             // Handle sprites vs rectangles differently
-            if (display.character.hasSprite && display.border) {
+            if (display.character.hasSprite && display.character.id === 'red-fighter' && display.border) {
                 // For sprites, update the border rectangle
                 display.border.setStrokeStyle(2, 0x000000);
                 

@@ -1318,7 +1318,15 @@ class GameScene extends Phaser.Scene {
                 const player = this.players[playerId];
                 if (player) {
                     player.body.setAlpha(1);
-                    player.body.setFillStyle(player.originalColor);
+                    
+                    // Only set fill style on rectangles, not sprites
+                    if (!player.isSprite) {
+                        player.body.setFillStyle(player.originalColor);
+                    } else {
+                        // For sprites, reset tint
+                        player.body.setTint(0xFFAAAA);
+                    }
+                    
                     player.blockIndicator.setAlpha(0);
                     
                     // Hide fall warnings
@@ -1736,16 +1744,18 @@ class GameScene extends Phaser.Scene {
             player.attackIndicator.setAlpha(0);
         }
         
-        // Show grounded status with visual cue
-        if (playerData.isGrounded) {
-            player.body.setStrokeStyle(3, 0x00FF00); // Green outline when grounded
-        } else {
-            player.body.setStrokeStyle(2, 0xFF0000); // Red outline when in air
-        }
-        
-        // Override for current player highlight
-        if (playerId === this.myPlayerId) {
-            player.body.setStrokeStyle(3, 0xFFFF00); // Yellow outline for current player
+        // Show grounded status with visual cue (only for rectangles, not sprites)
+        if (!player.isSprite) {
+            if (playerData.isGrounded) {
+                player.body.setStrokeStyle(3, 0x00FF00); // Green outline when grounded
+            } else {
+                player.body.setStrokeStyle(2, 0xFF0000); // Red outline when in air
+            }
+            
+            // Override for current player highlight
+            if (playerId === this.myPlayerId) {
+                player.body.setStrokeStyle(3, 0xFFFF00); // Yellow outline for current player
+            }
         }
         
         // Update stored data

@@ -160,7 +160,10 @@ class GameScene extends Phaser.Scene {
                 this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W),
                 this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP)
             ],
-            jump: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE),
+            jump: [
+                this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE),
+                this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W)
+            ],
             attack: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z)
         };
         
@@ -168,9 +171,10 @@ class GameScene extends Phaser.Scene {
         this.player2Keys = {
             left: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.J),
             right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.L),
+            up: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.I),
             jump: [
-                this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.I),
-                this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K)
+                this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K),
+                this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.I)
             ],
             attack: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.O)
         };
@@ -186,14 +190,16 @@ class GameScene extends Phaser.Scene {
             this.handlePlayerAttack('player2');
         });
         
-        // Set up jump key events
-        this.player1Keys.jump.on('down', () => {
-            this.handlePlayerJump('player1');
+        // Set up jump key events for Player 1 (Spacebar + W)
+        this.player1Keys.jump.forEach(key => {
+            key.on('down', () => {
+                this.handlePlayerJump('player1');
+            });
         });
         
-        // Set up Player 2 jump events for both I and K
-        this.player2Keys.jump.forEach(jumpKey => {
-            jumpKey.on('down', () => {
+        // Set up jump key events for Player 2 (K + I)
+        this.player2Keys.jump.forEach(key => {
+            key.on('down', () => {
                 this.handlePlayerJump('player2');
             });
         });

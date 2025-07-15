@@ -19,16 +19,16 @@ class MenuScene extends Phaser.Scene {
         
         startBtn.on('pointerdown', ()=>{
             Logger.log('2-Player local game selected');
-            this.scene.start('GameScene', { mode:'local' });
+            this.scene.start('CharacterSelectScene', { mode:'local' });
         });
         
         multiBtn.on('pointerdown', ()=>{
             Logger.log('Online multiplayer selected');
-            this.scene.start('GameScene', { mode:'multiplayer' });
+            this.scene.start('CharacterSelectScene', { mode:'multiplayer' });
         });
         
         // Add instruction text
-        this.add.text(width/2, height*0.75, 'Player 1: WASD + W/Up Arrow/Spacebar to jump + E to attack + R for special\nPlayer 2: IJKL + I to jump + O to attack + P for special', {
+        this.add.text(width/2, height*0.75, 'Player 1: WASD + W/Up Arrow/Spacebar to jump + E to attack + R for special + T to block\nPlayer 2: IJKL + I to jump + O to attack + P for special + [ to block', {
             fontSize:'16px', 
             color:'#888888', 
             align:'center'

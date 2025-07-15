@@ -27,7 +27,7 @@ A simplified Super Smash Bros clone built with Phaser 3 and Socket.io, supportin
 
 #### Character System
 - [✅] 2 placeholder characters (different colored rectangles) - Red & Blue implemented
-- [-] Character selection screen
+- [✅] Character selection screen - 4 characters with different stats
 - [-] Basic attack animations - Currently using visual indicators
 - [✅] Health system (3 lives per character)
 - [✅] Damage and knockback mechanics
@@ -35,7 +35,7 @@ A simplified Super Smash Bros clone built with Phaser 3 and Socket.io, supportin
 #### Combat Mechanics
 - [✅] Basic attack (punch/kick) - Regular attacks implemented
 - [✅] Special attacks - Enhanced attack system with cooldowns
-- [-] Blocking system
+- [✅] Blocking system - T key (P1) and [ key (P2), 5 second max, 10 second regeneration
 - [✅] Knockback based on damage percentage
 - [✅] Victory/defeat conditions
 
@@ -53,6 +53,9 @@ A simplified Super Smash Bros clone built with Phaser 3 and Socket.io, supportin
 - [✅] Visual feedback - Attack indicators, grounded status, fall warnings
 - [✅] Game state management - Respawn system, lives tracking, game over screen
 - [✅] Seamless game flow - Rematch and menu transitions without page refresh
+- [✅] Character selection screen - 4 unique characters with different stats
+- [✅] Blocking system - Shield mechanics with health, regeneration, and visual feedback
+- [✅] Enhanced game over - Select character, rematch, and main menu options
 
 ### Phase 3: Polish & Enhancement (Days 5-7)
 **Goal**: Polished gameplay experience

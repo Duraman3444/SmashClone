@@ -5,9 +5,14 @@ const config = {
     type: Phaser.AUTO,
     width: 800,
     height: 600,
-    parent: 'gameContainer',
-    backgroundColor: '#1a1a2e',
-    scene: [MenuScene, GameScene]
+    scene: [MenuScene, CharacterSelectScene, GameScene],
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 0 },
+            debug: false
+        }
+    }
 };
 
 window.addEventListener('DOMContentLoaded', () => {

@@ -21,12 +21,14 @@ A multiplayer Super Smash Bros clone built with Phaser 3 and Socket.io. This is 
 - **Jump**: W, Up Arrow, or Spacebar
 - **Regular Attack**: E key
 - **Special Attack**: R key
+- **Block**: T key
 
 ### Player 2 (Blue)  
 - **Movement**: IJKL keys
 - **Jump**: I key
 - **Regular Attack**: O key
 - **Special Attack**: P key
+- **Block**: [ key
 
 ### Debug
 - **H**: Toggle debug log overlay

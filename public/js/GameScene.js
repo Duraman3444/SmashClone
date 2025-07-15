@@ -9,7 +9,28 @@ class GameScene extends Phaser.Scene {
     }
 
     init(data) {
-        this.mode = data.mode || 'multiplayer';
+        Logger.log('GameScene initialized with data:', data);
+        this.mode = data.mode || 'local';
+        this.selectedCharacters = data.selectedCharacters || {
+            player1: {
+                id: 'red-fighter',
+                name: 'Red Fighter',
+                color: '#FF0000',
+                moveSpeed: 200,
+                jumpPower: -500,
+                description: 'Balanced fighter'
+            },
+            player2: {
+                id: 'blue-speedster',
+                name: 'Blue Speedster',
+                color: '#0000FF',
+                moveSpeed: 250,
+                jumpPower: -450,
+                description: 'Fast movement'
+            }
+        };
+        
+        Logger.log('Selected characters:', this.selectedCharacters);
         Logger.log('GameScene init with mode', this.mode);
         if(this.mode === 'multiplayer'){
             this.networkManager = new NetworkManager();
@@ -91,44 +112,60 @@ class GameScene extends Phaser.Scene {
     setupLocal(){
         Logger.log('Setting up local 2-player game');
         
-        // Create Player 1 (Red) - Left side
+        // Get selected characters
+        const char1 = this.selectedCharacters.player1;
+        const char2 = this.selectedCharacters.player2;
+        
+        // Create Player 1 (using selected character) - Left side
         const player1Data = {
             id: 'player1', 
             x: 300, 
             y: 200, // Start higher so they fall to ground
             width: 40, 
             height: 60, 
-            color: '#FF0000', 
+            color: char1.color, 
+            originalColor: char1.color,
             facingRight: true,
             health: 0, 
             lives: 3, 
             isAttacking: false,
+            isBlocking: false,
+            shieldHealth: 100,
+            shieldRegenTime: 0,
             isGrounded: false,
             velocityX: 0,
             velocityY: 0,
-            jumpPower: -500, // Negative for upward movement
-            moveSpeed: 200,
-            canJump: true
+            jumpPower: char1.jumpPower,
+            moveSpeed: char1.moveSpeed,
+            canJump: true,
+            characterName: char1.name,
+            characterId: char1.id
         };
         
-        // Create Player 2 (Blue) - Right side  
+        // Create Player 2 (using selected character) - Right side  
         const player2Data = {
             id: 'player2', 
             x: 500, 
             y: 200, // Start higher so they fall to ground
             width: 40, 
             height: 60, 
-            color: '#0000FF', 
+            color: char2.color, 
+            originalColor: char2.color,
             facingRight: false,
             health: 0, 
             lives: 3, 
             isAttacking: false,
+            isBlocking: false,
+            shieldHealth: 100,
+            shieldRegenTime: 0,
             isGrounded: false,
             velocityX: 0,
             velocityY: 0,
-            jumpPower: -500, // Negative for upward movement
-            moveSpeed: 200,
-            canJump: true
+            jumpPower: char2.jumpPower,
+            moveSpeed: char2.moveSpeed,
+            canJump: true,
+            characterName: char2.name,
+            characterId: char2.id
         };
         
         this.myPlayerId = 'player1'; // Set player 1 as "You" for UI
@@ -158,7 +195,7 @@ class GameScene extends Phaser.Scene {
         this.friction = 0.8; // Ground friction
         this.airResistance = 0.98; // Air resistance
         
-        // Player 1 controls: WASD/Arrow keys + E/R for attacks
+        // Player 1 controls: WASD/Arrow keys + E/R for attacks + T for block
         this.player1Keys = {
             left: [
                 this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
@@ -178,10 +215,11 @@ class GameScene extends Phaser.Scene {
                 this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP)
             ],
             attack: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E),
-            specialAttack: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R)
+            specialAttack: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R),
+            block: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.T)
         };
         
-        // Player 2 controls: IJKL + O/P for attacks
+        // Player 2 controls: IJKL + O/P for attacks + [ for block
         this.player2Keys = {
             left: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.J),
             right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.L),
@@ -190,7 +228,8 @@ class GameScene extends Phaser.Scene {
                 this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.I)
             ],
             attack: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.O),
-            specialAttack: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P)
+            specialAttack: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P),
+            block: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.OPEN_BRACKET)
         };
         
         // Set up attack key events
@@ -249,6 +288,12 @@ class GameScene extends Phaser.Scene {
             return;
         }
         
+        // Cannot attack while blocking
+        if (playerData.isBlocking) {
+            Logger.log(`${playerId} attack blocked - currently blocking`);
+            return;
+        }
+        
         // Check special attack cooldown (0.5 second = 500ms)
         if (attackType === 'special') {
             const timeSinceLastSpecial = currentTime - playerCooldown.lastSpecialAttackTime;
@@ -296,6 +341,84 @@ class GameScene extends Phaser.Scene {
         }, duration);
     }
     
+    // Handle blocking mechanics
+    handleBlocking(playerId, isBlockKeyDown) {
+        const playerData = this.localPlayers[playerId];
+        if (!playerData || playerData.eliminated) return;
+        
+        const currentTime = Date.now();
+        
+        // Check if shield is regenerating
+        if (playerData.shieldRegenTime > 0) {
+            if (currentTime >= playerData.shieldRegenTime) {
+                playerData.shieldHealth = 100;
+                playerData.shieldRegenTime = 0;
+                Logger.log(`${playerId} shield regenerated`);
+            } else {
+                // Cannot block while regenerating
+                playerData.isBlocking = false;
+                return;
+            }
+        }
+        
+        if (isBlockKeyDown && playerData.shieldHealth > 0) {
+            // Start blocking or continue blocking
+            if (!playerData.isBlocking) {
+                playerData.isBlocking = true;
+                playerData.blockStartTime = currentTime;
+                Logger.log(`${playerId} started blocking`);
+            } else {
+                // Check if max block time reached (5 seconds)
+                const blockDuration = currentTime - playerData.blockStartTime;
+                if (blockDuration >= 5000) {
+                    // Force break shield
+                    this.breakShield(playerId);
+                    return;
+                }
+                
+                // Reduce shield health over time (100 health over 5 seconds = 20 per second)
+                const shieldDrainRate = 20 / 1000; // per millisecond
+                const deltaTime = this.game.loop.delta;
+                playerData.shieldHealth -= shieldDrainRate * deltaTime;
+                
+                if (playerData.shieldHealth <= 0) {
+                    this.breakShield(playerId);
+                }
+            }
+        } else {
+            // Stop blocking
+            if (playerData.isBlocking) {
+                playerData.isBlocking = false;
+                // Reset shield health to full if not broken
+                if (playerData.shieldHealth > 0) {
+                    playerData.shieldHealth = 100;
+                }
+                Logger.log(`${playerId} stopped blocking`);
+            }
+        }
+        
+        // Update visual
+        this.updatePlayer(playerId, playerData);
+    }
+    
+    // Break shield and start regeneration
+    breakShield(playerId) {
+        const playerData = this.localPlayers[playerId];
+        if (!playerData) return;
+        
+        playerData.isBlocking = false;
+        playerData.shieldHealth = 0;
+        playerData.shieldRegenTime = Date.now() + 10000; // 10 seconds
+        
+        Logger.log(`${playerId} shield broken! Regenerating in 10 seconds`);
+        
+        // Visual feedback
+        this.showShieldBreakEffect(playerData.x, playerData.y);
+        
+        // Update visual
+        this.updatePlayer(playerId, playerData);
+    }
+    
     // Check for hits between players
     checkPlayerHits(attackerId, damage, knockback, range) {
         const attacker = this.localPlayers[attackerId];
@@ -319,8 +442,75 @@ class GameScene extends Phaser.Scene {
             
             // Check if hit connects
             if (distance < range && yDistance < 80) {
-                Logger.log(`${attackerId} hit ${playerId} with ${attacker.attackType} attack for ${damage} damage`);
-                this.applyHit(target, attacker, damage, knockback);
+                // Check if target is blocking
+                if (target.isBlocking && target.shieldHealth > 0) {
+                    // Attack hits shield
+                    const shieldDamage = damage * 0.5; // Shields absorb 50% damage
+                    target.shieldHealth -= shieldDamage;
+                    
+                    Logger.log(`${attackerId} attack blocked by ${playerId} shield (${shieldDamage} shield damage)`);
+                    
+                    // Visual feedback for blocked attack
+                    this.showBlockEffect(target.x, target.y);
+                    
+                    // Check if shield breaks
+                    if (target.shieldHealth <= 0) {
+                        this.breakShield(playerId);
+                    }
+                    
+                    // Slight knockback even when blocked
+                    const knockbackDirection = target.x > attacker.x ? 1 : -1;
+                    target.velocityX = knockbackDirection * (knockback * 0.2);
+                    
+                } else {
+                    // Normal hit
+                    Logger.log(`${attackerId} hit ${playerId} with ${attacker.attackType} attack for ${damage} damage`);
+                    this.applyHit(target, attacker, damage, knockback);
+                }
+            }
+        });
+    }
+    
+    // Show shield break visual effect
+    showShieldBreakEffect(x, y) {
+        // Create shield break particles
+        const shieldBreakText = this.add.text(x, y - 20, 'SHIELD BREAK!', {
+            fontSize: '16px',
+            fill: '#FF0000',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+        
+        // Animate the text
+        this.tweens.add({
+            targets: shieldBreakText,
+            y: y - 60,
+            alpha: 0,
+            duration: 1000,
+            ease: 'Power2',
+            onComplete: () => {
+                shieldBreakText.destroy();
+            }
+        });
+    }
+    
+    // Show block visual effect
+    showBlockEffect(x, y) {
+        // Create block effect
+        const blockText = this.add.text(x, y - 10, 'BLOCKED', {
+            fontSize: '12px',
+            fill: '#00FFFF',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+        
+        // Animate the text
+        this.tweens.add({
+            targets: blockText,
+            y: y - 40,
+            alpha: 0,
+            duration: 800,
+            ease: 'Power2',
+            onComplete: () => {
+                blockText.destroy();
             }
         });
     }
@@ -597,14 +787,29 @@ class GameScene extends Phaser.Scene {
         
         // Button style
         const buttonStyle = {
-            fontSize: '24px',
+            fontSize: '20px',
             backgroundColor: '#333333',
             color: '#FFFFFF',
-            padding: { x: 20, y: 10 }
+            padding: { x: 15, y: 8 }
         };
         
+        // Select Character button
+        const selectCharacterButton = this.add.text(200, 350, 'Select Character', buttonStyle)
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', () => {
+                Logger.log('Select Character selected');
+                this.goToCharacterSelect();
+            })
+            .on('pointerover', () => {
+                selectCharacterButton.setStyle({ backgroundColor: '#555555' });
+            })
+            .on('pointerout', () => {
+                selectCharacterButton.setStyle({ backgroundColor: '#333333' });
+            });
+        
         // Rematch button
-        const rematchButton = this.add.text(300, 350, 'Rematch', buttonStyle)
+        const rematchButton = this.add.text(400, 350, 'Rematch', buttonStyle)
             .setOrigin(0.5)
             .setInteractive({ useHandCursor: true })
             .on('pointerdown', () => {
@@ -619,11 +824,11 @@ class GameScene extends Phaser.Scene {
             });
         
         // Main menu button
-        const mainMenuButton = this.add.text(500, 350, 'Main Menu', buttonStyle)
+        const mainMenuButton = this.add.text(600, 350, 'Main Menu', buttonStyle)
             .setOrigin(0.5)
             .setInteractive({ useHandCursor: true })
             .on('pointerdown', () => {
-                Logger.log('Main Menu selected');
+                Logger.log('Going to main menu');
                 this.goToMainMenu();
             })
             .on('pointerover', () => {
@@ -654,6 +859,7 @@ class GameScene extends Phaser.Scene {
         this.gameOverElements = {
             overlay: overlay,
             winnerMessage: winnerMessage,
+            selectCharacterButton: selectCharacterButton,
             rematchButton: rematchButton,
             mainMenuButton: mainMenuButton,
             controlsText: controlsText
@@ -739,6 +945,24 @@ class GameScene extends Phaser.Scene {
         
         // Stop the game scene and go to menu
         this.scene.start('MenuScene');
+    }
+    
+    // Go to character select screen
+    goToCharacterSelect() {
+        Logger.log('Going to Character Select Scene');
+        
+        // Clean up game over elements
+        if (this.gameOverElements) {
+            Object.values(this.gameOverElements).forEach(element => {
+                if (element && element.destroy) {
+                    element.destroy();
+                }
+            });
+            this.gameOverElements = null;
+        }
+        
+        // Go to character select with same game mode
+        this.scene.start('CharacterSelectScene', { mode: this.mode });
     }
     
     isKeyDown(keyArray) {
@@ -837,6 +1061,25 @@ class GameScene extends Phaser.Scene {
         );
         livesText.setOrigin(0.5);
         
+        // Create shield health display
+        const shieldText = this.add.text(
+            playerData.x, 
+            playerData.y + 50, 
+            `Shield: ${Math.ceil(playerData.shieldHealth)}%`, 
+            { fontSize: '10px', fill: '#00FFFF' }
+        );
+        shieldText.setOrigin(0.5);
+        
+        // Create blocking indicator
+        const blockIndicator = this.add.rectangle(
+            playerData.x,
+            playerData.y,
+            50, 90,
+            0x00FFFF
+        );
+        blockIndicator.setAlpha(0);
+        blockIndicator.setStrokeStyle(2, 0x00FFFF);
+        
         // Add attack indicator
         const attackIndicator = this.add.rectangle(
             playerData.x + (playerData.facingRight ? 50 : -50),
@@ -851,6 +1094,8 @@ class GameScene extends Phaser.Scene {
         player.add(face);
         player.add(healthText);
         player.add(livesText);
+        player.add(shieldText);
+        player.add(blockIndicator);
         player.add(attackIndicator);
         
         // Store references and original color
@@ -860,6 +1105,8 @@ class GameScene extends Phaser.Scene {
             face: face,
             healthText: healthText,
             livesText: livesText,
+            shieldText: shieldText,
+            blockIndicator: blockIndicator,
             attackIndicator: attackIndicator,
             originalColor: playerData.color, // Store original color
             data: playerData
@@ -913,6 +1160,20 @@ class GameScene extends Phaser.Scene {
             player.livesText.setStyle({ fill: '#FFFF00' }); // Yellow for warning
         } else {
             player.livesText.setStyle({ fill: '#00FF00' }); // Green for safe
+        }
+        
+        // Update shield health display
+        player.shieldText.setPosition(playerData.x, playerData.y + 50);
+        player.shieldText.setText(`Shield: ${Math.ceil(playerData.shieldHealth)}%`);
+        
+        // Update blocking indicator
+        player.blockIndicator.setPosition(playerData.x, playerData.y);
+        
+        // Show blocking indicator if blocking
+        if (playerData.isBlocking) {
+            player.blockIndicator.setAlpha(0.5);
+        } else {
+            player.blockIndicator.setAlpha(0);
         }
         
         // Update attack indicator
@@ -1041,6 +1302,9 @@ class GameScene extends Phaser.Scene {
             if (player1 && !player1.eliminated) {
                 let moved = false;
                 
+                // Handle blocking
+                this.handleBlocking('player1', this.player1Keys.block.isDown);
+                
                 if (this.isKeyDown(this.player1Keys.left)) {
                     player1.velocityX = -player1.moveSpeed;
                     player1.facingRight = false;
@@ -1072,6 +1336,9 @@ class GameScene extends Phaser.Scene {
             // Handle Player 2 movement (only if not eliminated)
             if (player2 && !player2.eliminated) {
                 let moved = false;
+                
+                // Handle blocking
+                this.handleBlocking('player2', this.player2Keys.block.isDown);
                 
                 if (this.isKeyDown(this.player2Keys.left)) {
                     player2.velocityX = -player2.moveSpeed;

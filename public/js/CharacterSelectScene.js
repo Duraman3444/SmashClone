@@ -8,30 +8,16 @@ class CharacterSelectScene extends Phaser.Scene {
         this.fromGameOver = data.fromGameOver || false;
     }
 
-    // Add preload method to load Meow Knight sprite for preview
+    // Add preload method to load character preview images
     preload() {
-        Logger.log('CharacterSelectScene preload - Loading Meow Knight for preview');
+        Logger.log('CharacterSelectScene preload - Loading character preview images');
         
-        // Load Meow Knight idle sprite for character select preview
-        this.load.spritesheet('meow-knight-idle-preview', 'assets/characters/Meow Knight/Meow-Knight_Idle.png', {
-            frameWidth: 16,
-            frameHeight: 16
-        });
+        // Load Meow Knight idle sprite as static image (just first frame)
+        this.load.image('meow-knight-preview', 'assets/characters/Meow Knight/Meow-Knight_Idle.png');
     }
 
     create() {
         Logger.log('CharacterSelectScene created');
-        
-        // Create Meow Knight animation for preview
-        this.anims.create({
-            key: 'meow-knight-idle-preview',
-            frames: this.anims.generateFrameNumbers('meow-knight-idle-preview', { 
-                start: 0, 
-                end: 8
-            }),
-            frameRate: 8,
-            repeat: -1
-        });
         
         // Hide status div
         const statusDiv = document.getElementById('status');
@@ -132,17 +118,22 @@ class CharacterSelectScene extends Phaser.Scene {
             
             let preview;
             
-            // Create character preview (sprite for red-fighter, rectangle for others)
+            // Create character preview (static image for red-fighter, rectangle for others)
+            let border = null;
             if (character.hasSprite) {
-                preview = this.add.sprite(x, y, 'meow-knight-idle-preview');
+                preview = this.add.image(x, y, 'meow-knight-preview');
                 preview.setScale(4); // Scale up for better visibility
-                preview.play('meow-knight-idle-preview');
                 preview.setTint(0xFFAAAA); // Light red tint to match character color
+                
+                // Add border rectangle behind the sprite
+                border = this.add.rectangle(x, y, 60, 80, 0x000000);
+                border.setStrokeStyle(2, 0x000000);
+                border.setAlpha(0); // Make fill transparent, only show border
+                border.setDepth(preview.depth - 1); // Put border behind sprite
             } else {
                 preview = this.add.rectangle(x, y, 60, 80, character.color);
+                preview.setStrokeStyle(2, 0x000000);
             }
-            
-            preview.setStrokeStyle(2, 0x000000);
             
             // Character name
             const nameText = this.add.text(x, y + 60, character.name, {
@@ -168,6 +159,7 @@ class CharacterSelectScene extends Phaser.Scene {
             
             this.characterDisplays.push({
                 preview,
+                border,
                 nameText,
                 descText,
                 statsText,
@@ -262,30 +254,59 @@ class CharacterSelectScene extends Phaser.Scene {
         for (let i = 0; i < this.characterDisplays.length; i++) {
             const display = this.characterDisplays[i];
             
-            // Reset borders
-            display.preview.setStrokeStyle(2, 0x000000);
-            
-            // Player 1 selection highlight
-            if (this.currentSelections.player1 === i) {
-                display.preview.setStrokeStyle(4, 0xFF0000);
-            }
-            
-            // Player 2 selection highlight
-            if (this.currentSelections.player2 === i) {
-                display.preview.setStrokeStyle(4, 0x0000FF);
-            }
-            
-            // Both players selected same character
-            if (this.currentSelections.player1 === i && this.currentSelections.player2 === i) {
-                display.preview.setStrokeStyle(4, 0xFF00FF);
-            }
-            
-            // Selected character confirmation
-            if (this.selectedCharacters.player1 && this.selectedCharacters.player1.id === display.character.id) {
-                display.preview.setStrokeStyle(6, 0xFF0000);
-            }
-            if (this.selectedCharacters.player2 && this.selectedCharacters.player2.id === display.character.id) {
-                display.preview.setStrokeStyle(6, 0x0000FF);
+            // Handle sprites vs rectangles differently
+            if (display.character.hasSprite && display.border) {
+                // For sprites, update the border rectangle
+                display.border.setStrokeStyle(2, 0x000000);
+                
+                // Player 1 selection highlight
+                if (this.currentSelections.player1 === i) {
+                    display.border.setStrokeStyle(4, 0xFF0000);
+                }
+                
+                // Player 2 selection highlight
+                if (this.currentSelections.player2 === i) {
+                    display.border.setStrokeStyle(4, 0x0000FF);
+                }
+                
+                // Both players selected same character
+                if (this.currentSelections.player1 === i && this.currentSelections.player2 === i) {
+                    display.border.setStrokeStyle(4, 0xFF00FF);
+                }
+                
+                // Selected character confirmation
+                if (this.selectedCharacters.player1 && this.selectedCharacters.player1.id === display.character.id) {
+                    display.border.setStrokeStyle(6, 0xFF0000);
+                }
+                if (this.selectedCharacters.player2 && this.selectedCharacters.player2.id === display.character.id) {
+                    display.border.setStrokeStyle(6, 0x0000FF);
+                }
+            } else {
+                // For rectangles, update the preview directly
+                display.preview.setStrokeStyle(2, 0x000000);
+                
+                // Player 1 selection highlight
+                if (this.currentSelections.player1 === i) {
+                    display.preview.setStrokeStyle(4, 0xFF0000);
+                }
+                
+                // Player 2 selection highlight
+                if (this.currentSelections.player2 === i) {
+                    display.preview.setStrokeStyle(4, 0x0000FF);
+                }
+                
+                // Both players selected same character
+                if (this.currentSelections.player1 === i && this.currentSelections.player2 === i) {
+                    display.preview.setStrokeStyle(4, 0xFF00FF);
+                }
+                
+                // Selected character confirmation
+                if (this.selectedCharacters.player1 && this.selectedCharacters.player1.id === display.character.id) {
+                    display.preview.setStrokeStyle(6, 0xFF0000);
+                }
+                if (this.selectedCharacters.player2 && this.selectedCharacters.player2.id === display.character.id) {
+                    display.preview.setStrokeStyle(6, 0x0000FF);
+                }
             }
         }
         

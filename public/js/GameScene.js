@@ -1085,11 +1085,8 @@ class GameScene extends Phaser.Scene {
                 if (player) {
                     player.body.setAlpha(1);
                     player.body.setFillStyle(player.originalColor);
-                    player.healthText.setText('0%');
-                    player.healthText.setStyle({ fill: '#fff' });
                     player.livesText.setText('Lives: 3');
                     player.livesText.setStyle({ fill: '#00FF00' });
-                    player.shieldText.setText('Shield: 100%');
                     player.blockIndicator.setAlpha(0);
                     
                     // Hide fall warnings
@@ -1338,15 +1335,6 @@ class GameScene extends Phaser.Scene {
             0xFFFFFF
         );
         
-        // Create health display
-        const healthText = this.add.text(
-            playerData.x, 
-            playerData.y - 40, 
-            `${playerData.health}%`, 
-            { fontSize: '14px', fill: '#fff' }
-        );
-        healthText.setOrigin(0.5);
-        
         // Create lives display
         const livesText = this.add.text(
             playerData.x, 
@@ -1355,15 +1343,6 @@ class GameScene extends Phaser.Scene {
             { fontSize: '12px', fill: '#fff' }
         );
         livesText.setOrigin(0.5);
-        
-        // Create shield health display
-        const shieldText = this.add.text(
-            playerData.x, 
-            playerData.y + 50, 
-            `Shield: ${Math.ceil(playerData.shieldHealth)}%`, 
-            { fontSize: '10px', fill: '#00FFFF' }
-        );
-        shieldText.setOrigin(0.5);
         
         // Create blocking indicator
         const blockIndicator = this.add.rectangle(
@@ -1387,9 +1366,7 @@ class GameScene extends Phaser.Scene {
         
         player.add(body);
         player.add(face);
-        player.add(healthText);
         player.add(livesText);
-        player.add(shieldText);
         player.add(blockIndicator);
         player.add(attackIndicator);
         
@@ -1398,9 +1375,7 @@ class GameScene extends Phaser.Scene {
             group: player,
             body: body,
             face: face,
-            healthText: healthText,
             livesText: livesText,
-            shieldText: shieldText,
             blockIndicator: blockIndicator,
             attackIndicator: attackIndicator,
             originalColor: playerData.color, // Store original color
@@ -1418,9 +1393,7 @@ class GameScene extends Phaser.Scene {
         if (playerData.eliminated) {
             player.body.setAlpha(0.3); // Make eliminated player semi-transparent
             player.body.setFillStyle(0x888888); // Gray out eliminated player
-            player.healthText.setText('ELIMINATED');
-            player.healthText.setStyle({ fill: '#FF0000' });
-            player.livesText.setText('Lives: 0');
+            player.livesText.setText('ELIMINATED');
             player.livesText.setStyle({ fill: '#FF0000' });
             return; // Don't update position/other properties for eliminated players
         }
@@ -1439,11 +1412,6 @@ class GameScene extends Phaser.Scene {
             playerData.y - 15
         );
         
-        // Update health display
-        player.healthText.setPosition(playerData.x, playerData.y - 40);
-        player.healthText.setText(`${playerData.health}%`);
-        player.healthText.setStyle({ fill: '#fff' }); // Reset color
-        
         // Update lives display with emphasis
         player.livesText.setPosition(playerData.x, playerData.y + 35);
         player.livesText.setText(`Lives: ${playerData.lives}`);
@@ -1456,10 +1424,6 @@ class GameScene extends Phaser.Scene {
         } else {
             player.livesText.setStyle({ fill: '#00FF00' }); // Green for safe
         }
-        
-        // Update shield health display
-        player.shieldText.setPosition(playerData.x, playerData.y + 50);
-        player.shieldText.setText(`Shield: ${Math.ceil(playerData.shieldHealth)}%`);
         
         // Update blocking indicator
         player.blockIndicator.setPosition(playerData.x, playerData.y);

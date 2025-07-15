@@ -255,7 +255,18 @@ class CharacterSelectScene extends Phaser.Scene {
         }
     }
     
-    createSelectionUI() {
+    createInstructions() {
+        const { width, height } = this.scale;
+        
+        // Instructions
+        this.add.text(width/2, height * 0.85, 'Player 1: A/D to move, E to select | Player 2: J/L to move, O to select', {
+            fontSize: '16px',
+            color: '#ffffff',
+            align: 'center'
+        }).setOrigin(0.5);
+    }
+
+    createPlayerLabels() {
         const { width, height } = this.scale;
         
         // Player selection indicators
@@ -280,6 +291,13 @@ class CharacterSelectScene extends Phaser.Scene {
             color: '#ffffff'
         }).setOrigin(0.5);
         
+        // Create hover indicators
+        this.createHoverIndicators();
+    }
+
+    createStartButton() {
+        const { width, height } = this.scale;
+        
         // Start button (appears when both players selected)
         this.startButton = this.add.text(width/2, height * 0.75, 'Start Game', {
             fontSize: '24px',
@@ -292,7 +310,28 @@ class CharacterSelectScene extends Phaser.Scene {
             this.startGame();
         });
     }
-    
+
+    setupInputHandling() {
+        // Initialize current selections
+        this.currentSelections = {
+            player1: 0,
+            player2: 0
+        };
+        
+        // Set up controls
+        this.setupControls();
+    }
+
+    updateCharacterHighlight() {
+        // Update the display initially
+        this.updateDisplay();
+    }
+
+    updatePlayerInfo() {
+        // Update player info display
+        this.updateDisplay();
+    }
+
     createHoverIndicators() {
         const { width, height } = this.scale;
         
@@ -353,7 +392,7 @@ class CharacterSelectScene extends Phaser.Scene {
             align: 'center'
         }).setOrigin(0.5);
     }
-    
+
     setupControls() {
         // Player 1 controls
         this.player1Keys = {
@@ -378,14 +417,14 @@ class CharacterSelectScene extends Phaser.Scene {
         this.player2Keys.right.on('down', () => this.moveSelection('player2', 1));
         this.player2Keys.select.on('down', () => this.selectCharacter('player2'));
     }
-    
+
     moveSelection(player, direction) {
         const currentIndex = this.currentSelections[player];
-        const newIndex = Phaser.Math.Clamp(currentIndex + direction, 0, 4); // Updated to 4 (0-4 for 5 characters)
+        const newIndex = Phaser.Math.Clamp(currentIndex + direction, 0, 5); // Updated to 5 (0-5 for 6 characters)
         this.currentSelections[player] = newIndex;
         this.updateDisplay();
     }
-    
+
     selectCharacter(player) {
         const characterIndex = this.currentSelections[player];
         const character = this.characterTypes[characterIndex];
@@ -396,7 +435,7 @@ class CharacterSelectScene extends Phaser.Scene {
         this.updateDisplay();
         this.checkReadyToStart();
     }
-    
+
     updateDisplay() {
         // Update selection indicators
         for (let i = 0; i < this.characterDisplays.length; i++) {
@@ -499,13 +538,13 @@ class CharacterSelectScene extends Phaser.Scene {
             this.player2HoverStats.setText(`Speed: ${player2HoveringCharacter.moveSpeed} | Jump: ${Math.abs(player2HoveringCharacter.jumpPower)}`);
         }
     }
-    
+
     checkReadyToStart() {
         if (this.selectedCharacters.player1 && this.selectedCharacters.player2) {
             this.startButton.setVisible(true);
         }
     }
-    
+
     startGame() {
         Logger.log('Starting game with selected characters');
         

@@ -777,8 +777,8 @@ class GameScene extends Phaser.Scene {
                 targetAnimation = 'stickman-idle'; // Use idle animation when blocking
             } else if (!playerData.isGrounded) {
                 targetAnimation = 'stickman-jump'; // Use jump animation when in air
-            } else if (Math.abs(playerData.velocityX) > 50) {
-                targetAnimation = 'stickman-run'; // Use run animation when moving
+            } else if (Math.abs(playerData.velocityX) > 0.1) {
+                targetAnimation = 'stickman-run'; // Use run animation for any movement
             } else {
                 targetAnimation = 'stickman-idle';
             }

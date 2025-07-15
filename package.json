@@ -1,0 +1,26 @@
+{
+  "name": "super-smash-clone",
+  "version": "1.0.0",
+  "description": "A multiplayer Super Smash Bros clone built with Phaser 3 and Socket.io",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "nodemon server/index.js",
+    "client": "live-server public --port=8080 --host=localhost",
+    "server": "nodemon server/index.js",
+    "dev:both": "concurrently \"npm run server\" \"npm run client\""
+  },
+  "keywords": ["game", "phaser", "socket.io", "multiplayer"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "socket.io": "^4.7.2",
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "concurrently": "^8.2.0",
+    "live-server": "^1.2.2"
+  }
+} 

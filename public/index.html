@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Smash Clone</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #1a1a2e;
+            font-family: Arial, sans-serif;
+        }
+        
+        #gameContainer {
+            position: relative;
+            border: 2px solid #16213e;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            z-index: 100;
+            color: white;
+            font-weight: bold;
+        }
+        
+        #playerList {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .player-info {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 5px 10px;
+            border-radius: 5px;
+            min-width: 120px;
+        }
+        
+        .player-health {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .player-lives {
+            font-size: 14px;
+        }
+        
+        #controls {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            color: white;
+            font-size: 12px;
+        }
+        
+        #status {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 200;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="ui">
+            <div id="playerList"></div>
+        </div>
+        
+        <div id="controls">
+            <strong>Controls:</strong><br>
+            <strong>Player 1 (Red):</strong> WASD or Arrow Keys to move | Z to attack<br>
+            <strong>Player 2 (Blue):</strong> IJKL to move | O to attack | Press H to toggle debug
+        </div>
+        
+        <div id="status">
+            <h2>Connecting to server...</h2>
+            <p>Please wait while we connect you to the game.</p>
+        </div>
+        <div id="debugLog" style="position:absolute; bottom:60px; left:10px; right:10px; max-height:150px; overflow:auto; background:rgba(0,0,0,0.6); color:#0f0; font-size:10px; padding:4px; border-radius:4px;" class="hidden"></div>
+    </div>
+
+    <!-- Phaser 3 -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+    <!-- Socket.io -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <!-- Game Scripts -->
+    <script src="js/Logger.js"></script>
+    <script src="js/MenuScene.js"></script>
+    <script src="js/GameScene.js"></script>
+    <script src="js/NetworkManager.js"></script>
+    <script src="js/InputManager.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html> 

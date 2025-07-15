@@ -641,6 +641,13 @@ class GameScene extends Phaser.Scene {
             return;
         }
         
+        // Check if attack animation is currently playing (for sprite characters)
+        const player = this.players[playerId];
+        if (player && player.isSprite && player.body.anims.currentAnim?.key.includes('attack') && player.body.anims.isPlaying) {
+            Logger.log(`${playerId} attack blocked - attack animation still playing`);
+            return;
+        }
+        
         // Cannot attack while blocking
         if (playerData.isBlocking) {
             Logger.log(`${playerId} attack blocked - currently blocking`);
@@ -1609,6 +1616,28 @@ class GameScene extends Phaser.Scene {
             
             // Set tint to maintain color identification (subtle red tint)
             body.setTint(0xFFAAAA); // Light red tint
+            
+            // Add event listener for when attack animations complete
+            body.on('animationcomplete', (animation, frame) => {
+                if (animation.key.includes('attack')) {
+                    // Attack animation completed, clear the attack state
+                    const playerCooldown = this.attackCooldowns[playerId];
+                    const playerData = this.localPlayers[playerId];
+                    
+                    if (playerCooldown) {
+                        playerCooldown.isInAttack = false;
+                    }
+                    
+                    if (playerData && !playerData.eliminated) {
+                        playerData.isAttacking = false;
+                        playerData.attackType = null;
+                        playerData.attackDirection = null;
+                        this.updatePlayer(playerId, playerData);
+                    }
+                    
+                    Logger.log(`${playerId} attack animation completed - can attack again`);
+                }
+            });
             
             Logger.log('Created Meow Knight sprite for red-fighter');
         } else {

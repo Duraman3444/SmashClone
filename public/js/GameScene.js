@@ -189,7 +189,7 @@ class GameScene extends Phaser.Scene {
                 start: 0, 
                 end: 8
             }),
-            frameRate: 15,
+            frameRate: 8,  // Reduced from 15 to 8 for more natural hitting
             repeat: 0
         });
         
@@ -199,7 +199,7 @@ class GameScene extends Phaser.Scene {
                 start: 0, 
                 end: 3
             }),
-            frameRate: 12,
+            frameRate: 6,  // Reduced from 12 to 6 for more natural hitting
             repeat: 0
         });
         
@@ -209,7 +209,7 @@ class GameScene extends Phaser.Scene {
                 start: 0, 
                 end: 3
             }),
-            frameRate: 12,
+            frameRate: 6,  // Reduced from 12 to 6 for more natural hitting
             repeat: 0
         });
         
@@ -219,7 +219,7 @@ class GameScene extends Phaser.Scene {
                 start: 0, 
                 end: 9
             }),
-            frameRate: 15,
+            frameRate: 8,  // Reduced from 15 to 8 for more natural hitting
             repeat: 0
         });
         

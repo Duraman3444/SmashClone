@@ -4,14 +4,28 @@ A multiplayer Super Smash Bros clone built with Phaser 3 and Socket.io. This is 
 
 ## 🎮 Game Features
 
-- **Multiplayer**: Up to 4 players can play simultaneously
+- **2-Player Local Mode**: Two players can play simultaneously on the same device
 - **Real-time Combat**: Players can move, jump, and attack in real-time
 - **Damage System**: Health percentage increases with damage (like Smash Bros)
 - **Knockback Mechanics**: Higher damage = stronger knockback
 - **Lives System**: 3 lives per player
 - **Respawn System**: Players respawn when knocked off stage
-- **Placeholder Characters**: 4 different colored characters (Red, Green, Blue, Yellow)
+- **Placeholder Characters**: Red and Blue characters with unique controls
 - **Simple Stage**: Ground platform with multiple smaller platforms
+- **Online Multiplayer**: Support for up to 4 players online (via Socket.io)
+
+## 🕹️ Controls
+
+### Player 1 (Red)
+- **Movement**: WASD or Arrow Keys
+- **Attack**: Z key
+
+### Player 2 (Blue)  
+- **Movement**: IJKL keys
+- **Attack**: O key
+
+### Debug
+- **H**: Toggle debug log overlay
 
 ## 🚀 Quick Start
 
@@ -35,7 +49,8 @@ A multiplayer Super Smash Bros clone built with Phaser 3 and Socket.io. This is 
 
 4. **Open your browser:**
    - Go to `http://localhost:3000`
-   - Open multiple tabs/windows to test multiplayer
+   - Click "Start Game" for 2-player local mode
+   - Or click "Online Multiplayer" to play with others
 
 ### Alternative: Separate Server/Client
 
@@ -49,16 +64,22 @@ npm run server
 npm run client
 ```
 
+## 🔧 Git Workflow
+
+This project uses a dual-branch workflow:
+
+- **main**: Active development branch with regular commits and updates
+- **demo**: Stable demo branch, only updated when requested
+
+### Development Process
+All regular development happens on the **main** branch. The **demo** branch is only updated when you specifically request it, ensuring it always contains stable, tested versions.
+
+For detailed workflow information, see [GIT_WORKFLOW.md](GIT_WORKFLOW.md).
+
 ## 🎯 How to Play
 
-### Controls
-- **Movement**: WASD or Arrow Keys
-- **Jump**: Spacebar
-- **Attack**: Z key
-- **Block**: X key (placeholder for future implementation)
-
 ### Objective
-- Battle other players on the stage
+- Battle the other player on the stage
 - Deal damage to increase their knockback vulnerability
 - Knock opponents off the stage to eliminate them
 - Last player standing wins!
@@ -82,11 +103,14 @@ SuperSmashClone/
 │   ├── index.html         # Main HTML file
 │   └── js/
 │       ├── main.js        # Game initialization
+│       ├── MenuScene.js   # Menu system
 │       ├── GameScene.js   # Main game scene
 │       ├── NetworkManager.js  # Socket.io handling
-│       └── InputManager.js    # Input management
+│       ├── InputManager.js    # Input management
+│       └── Logger.js      # Debug logging
 ├── package.json           # Dependencies and scripts
 ├── PRD.md                # Product Requirements Document
+├── GIT_WORKFLOW.md       # Git workflow documentation
 └── README.md             # This file
 ```
 
@@ -112,19 +136,17 @@ SuperSmashClone/
 
 ## 🧪 Testing
 
-### Single Player Testing
+### Local 2-Player Testing
 1. Open `http://localhost:3000` in your browser
-2. You should see your character (colored rectangle) on the stage
-3. Test movement with WASD/Arrow keys
-4. Test jumping with Spacebar
-5. Test attacking with Z key
+2. Click "Start Game" for 2-player local mode
+3. Player 1 uses WASD + Z, Player 2 uses IJKL + O
+4. Test movement, attacks, and combat mechanics
 
-### Multiplayer Testing
+### Online Multiplayer Testing
 1. Open multiple browser tabs/windows to `http://localhost:3000`
-2. Each tab represents a different player
-3. Test that all players can see each other
-4. Test combat between players
-5. Test knockback and elimination mechanics
+2. Click "Online Multiplayer" in each tab
+3. Each tab represents a different player
+4. Test that all players can see each other and interact
 
 ### Network Testing
 1. Test with slow network (Chrome DevTools > Network > Slow 3G)
@@ -162,23 +184,6 @@ npm run client
 npm start
 ```
 
-## 🎨 Customization
-
-### Adding New Characters
-1. Add new colors to `characterColors` array in `server/game/GameRoom.js`
-2. Increase `maxPlayers` if needed
-3. Add character-specific logic in game files
-
-### Adding New Stages
-1. Modify `createStage()` in `public/js/GameScene.js`
-2. Update platform collision in `server/game/GameRoom.js`
-3. Add stage selection logic
-
-### Modifying Game Rules
-1. Edit combat parameters in `server/game/GameRoom.js`
-2. Adjust physics values (gravity, jump strength, etc.)
-3. Modify win conditions in `checkGameEnd()`
-
 ## 📋 Phase Implementation Status
 
 ### ✅ Phase 1: Foundation & Prototype (COMPLETE)
@@ -188,6 +193,7 @@ npm start
 - [x] Player movement and controls
 - [x] Simple stage with platforms
 - [x] Basic physics and collision
+- [x] 2-player local mode
 
 ### 🔄 Phase 2: Core Gameplay (IN PROGRESS)
 - [x] 4 player support

@@ -264,7 +264,7 @@ class GameScene extends Phaser.Scene {
         const sprite = player.body;
         let targetAnimation = 'meow-knight-idle';
         
-        // Priority order: Death > Attack > Block > Jump > Run > Idle
+        // Priority order: Death > Attack > Dodge > Block > Jump > Run > Idle
         if (playerData.eliminated) {
             targetAnimation = 'meow-knight-death';
         } else if (playerData.isAttacking) {
@@ -289,6 +289,8 @@ class GameScene extends Phaser.Scene {
                         break;
                 }
             }
+        } else if (playerData.isDodging) {
+            targetAnimation = 'meow-knight-dodge';
         } else if (playerData.isBlocking) {
             targetAnimation = 'meow-knight-dodge';
         } else if (!playerData.isGrounded) {
@@ -381,6 +383,10 @@ class GameScene extends Phaser.Scene {
             lives: 3, 
             isAttacking: false,
             isBlocking: false,
+            isDodging: false,
+            dodgeStartTime: 0,
+            dodgeEndTime: 0,
+            dodgeCooldown: 0,
             shieldHealth: 100,
             shieldRegenTime: 0,
             isGrounded: false,
@@ -407,6 +413,10 @@ class GameScene extends Phaser.Scene {
             lives: 3, 
             isAttacking: false,
             isBlocking: false,
+            isDodging: false,
+            dodgeStartTime: 0,
+            dodgeEndTime: 0,
+            dodgeCooldown: 0,
             shieldHealth: 100,
             shieldRegenTime: 0,
             isGrounded: false,
@@ -446,7 +456,7 @@ class GameScene extends Phaser.Scene {
         this.friction = 0.8; // Ground friction
         this.airResistance = 0.98; // Air resistance
         
-        // Player 1 controls: WASD/Arrow keys + E/R for attacks + T for block
+        // Player 1 controls: WASD/Arrow keys + E/R for attacks + T for block + Q for dodge
         this.player1Keys = {
             left: [
                 this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
@@ -471,10 +481,11 @@ class GameScene extends Phaser.Scene {
             ],
             attack: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E),
             specialAttack: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R),
-            block: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.T)
+            block: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.T),
+            dodge: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Q)
         };
         
-        // Player 2 controls: IJKL + O/P for attacks + [ for block
+        // Player 2 controls: IJKL + O/P for attacks + [ for block + U for dodge
         this.player2Keys = {
             left: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.J),
             right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.L),
@@ -485,7 +496,8 @@ class GameScene extends Phaser.Scene {
             ],
             attack: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.O),
             specialAttack: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P),
-            block: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.OPEN_BRACKET)
+            block: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.OPEN_BRACKET),
+            dodge: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.U)
         };
         
         // Set up attack key events
@@ -523,6 +535,31 @@ class GameScene extends Phaser.Scene {
             
             Logger.log(`Player 2 special attack ${direction}`);
             this.handlePlayerAttack('player2', 'special', direction);
+        });
+        
+        // Set up dodge key events
+        this.player1Keys.dodge.on('down', () => {
+            Logger.log('Player 1 dodge attempt');
+            this.handlePlayerDodge('player1');
+        });
+        
+        this.player2Keys.dodge.on('down', () => {
+            Logger.log('Player 2 dodge attempt');
+            this.handlePlayerDodge('player2');
+        });
+        
+        // Prevent default browser behavior for game keys
+        this.input.keyboard.on('keydown', (event) => {
+            const gameCodes = [
+                'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+                'KeyW', 'KeyA', 'KeyS', 'KeyD',
+                'Space', 'KeyE', 'KeyR', 'KeyT', 'KeyQ',
+                'KeyI', 'KeyJ', 'KeyK', 'KeyL', 'KeyO', 'KeyP', 'BracketLeft', 'KeyU'
+            ];
+            
+            if (gameCodes.includes(event.code)) {
+                event.preventDefault();
+            }
         });
         
         // Set up jump key events for Player 1 (Spacebar + W)
@@ -770,6 +807,73 @@ class GameScene extends Phaser.Scene {
         this.updatePlayer(playerId, playerData);
     }
     
+    // Handle dodge mechanics
+    handlePlayerDodge(playerId) {
+        const playerData = this.localPlayers[playerId];
+        if (!playerData || playerData.eliminated) return;
+        
+        const currentTime = Date.now();
+        
+        // Check if dodge is on cooldown
+        if (currentTime < playerData.dodgeCooldown) {
+            Logger.log(`${playerId} dodge blocked - cooldown active (${playerData.dodgeCooldown - currentTime}ms remaining)`);
+            return;
+        }
+        
+        // Cannot dodge while already dodging
+        if (playerData.isDodging) {
+            Logger.log(`${playerId} dodge blocked - already dodging`);
+            return;
+        }
+        
+        // Cannot dodge while attacking
+        if (playerData.isAttacking) {
+            Logger.log(`${playerId} dodge blocked - currently attacking`);
+            return;
+        }
+        
+        // Start dodge
+        playerData.isDodging = true;
+        playerData.dodgeStartTime = currentTime;
+        playerData.dodgeEndTime = currentTime + 300; // 300ms dodge duration
+        playerData.dodgeCooldown = currentTime + 1000; // 1 second cooldown
+        
+        Logger.log(`${playerId} started dodge`);
+        
+        // Update visual
+        this.updatePlayer(playerId, playerData);
+        
+        // End dodge after duration
+        setTimeout(() => {
+            if (playerData && !playerData.eliminated) {
+                playerData.isDodging = false;
+                Logger.log(`${playerId} dodge ended`);
+                this.updatePlayer(playerId, playerData);
+            }
+        }, 300);
+    }
+    
+    // Show dodge success text
+    showDodgeSuccessText(x, y) {
+        const dodgeText = this.add.text(x, y - 40, 'DODGE', {
+            fontSize: '16px',
+            fill: '#00FF00',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+        
+        // Animate the text
+        this.tweens.add({
+            targets: dodgeText,
+            y: y - 80,
+            alpha: 0,
+            duration: 1000,
+            ease: 'Power2',
+            onComplete: () => {
+                dodgeText.destroy();
+            }
+        });
+    }
+    
     // Break shield and start regeneration
     breakShield(playerId) {
         const playerData = this.localPlayers[playerId];
@@ -851,6 +955,17 @@ class GameScene extends Phaser.Scene {
                 } else {
                     // Regular attacks: 5 damage
                     damage = 5;
+                }
+                
+                // Check if target is dodging
+                if (target.isDodging) {
+                    Logger.log(`${attackerId} ${direction} attack dodged by ${playerId}`);
+                    
+                    // Show dodge success text
+                    this.showDodgeSuccessText(target.x, target.y);
+                    
+                    // No damage or knockback for successful dodges
+                    return;
                 }
                 
                 // Check if target is blocking
@@ -1333,6 +1448,10 @@ class GameScene extends Phaser.Scene {
             this.localPlayers.player1.shieldHealth = 100;
             this.localPlayers.player1.shieldRegenTime = 0;
             this.localPlayers.player1.isBlocking = false;
+            this.localPlayers.player1.isDodging = false;
+            this.localPlayers.player1.dodgeStartTime = 0;
+            this.localPlayers.player1.dodgeEndTime = 0;
+            this.localPlayers.player1.dodgeCooldown = 0;
             this.localPlayers.player1.x = 300;
             this.localPlayers.player1.y = 200;
             this.localPlayers.player1.velocityX = 0;
@@ -1346,6 +1465,10 @@ class GameScene extends Phaser.Scene {
             this.localPlayers.player2.shieldHealth = 100;
             this.localPlayers.player2.shieldRegenTime = 0;
             this.localPlayers.player2.isBlocking = false;
+            this.localPlayers.player2.isDodging = false;
+            this.localPlayers.player2.dodgeStartTime = 0;
+            this.localPlayers.player2.dodgeEndTime = 0;
+            this.localPlayers.player2.dodgeCooldown = 0;
             this.localPlayers.player2.x = 500;
             this.localPlayers.player2.y = 200;
             this.localPlayers.player2.velocityX = 0;

@@ -65,7 +65,7 @@ class InputManager {
             const gameCodes = [
                 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
                 'KeyW', 'KeyA', 'KeyS', 'KeyD',
-                'Space', 'KeyZ', 'KeyX', 'KeyC'
+                'Space', 'KeyZ', 'KeyX', 'KeyC', 'KeyQ', 'KeyU'
             ];
             
             if (gameCodes.includes(event.code)) {

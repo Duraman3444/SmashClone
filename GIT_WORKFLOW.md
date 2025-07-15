@@ -37,8 +37,8 @@
 ### Latest Demo Branch Update
 - **Date**: 2024-12-XX
 - **Action**: Merged all changes from main to demo branch
-- **Result**: Both branches now synchronized at commit d465899
-- **Features**: Complete 2-player game with physics, gravity, multiple jump controls, enhanced life system, and fixed setTint errors
+- **Result**: Both branches now synchronized at commit c949673
+- **Features**: Complete 2-player game with physics, gravity, multiple jump controls, enhanced life system, fixed setTint errors, and game over screen with rematch/main menu options
 
 ## Usage Commands
 

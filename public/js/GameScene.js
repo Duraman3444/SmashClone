@@ -1609,6 +1609,24 @@ class GameScene extends Phaser.Scene {
             body.setStrokeStyle(2, 0x000000);
         }
         
+        // Create eyes for placeholder characters (but not sprites)
+        let leftEye = null;
+        let rightEye = null;
+        if (playerData.characterId !== 'red-fighter') {
+            leftEye = this.add.circle(
+                playerData.x - 8,
+                playerData.y - 10,
+                3,
+                0xFFFFFF
+            );
+            rightEye = this.add.circle(
+                playerData.x + 8,
+                playerData.y - 10,
+                3,
+                0xFFFFFF
+            );
+        }
+        
         // Create blocking indicator
         const blockIndicator = this.add.rectangle(
             playerData.x,
@@ -1630,6 +1648,8 @@ class GameScene extends Phaser.Scene {
         attackIndicator.setStrokeStyle(2, 0xFF0000);
         
         player.add(body);
+        if (leftEye) player.add(leftEye);
+        if (rightEye) player.add(rightEye);
         player.add(blockIndicator);
         player.add(attackIndicator);
         
@@ -1637,6 +1657,8 @@ class GameScene extends Phaser.Scene {
         this.players[playerId] = {
             group: player,
             body: body,
+            leftEye: leftEye,
+            rightEye: rightEye,
             blockIndicator: blockIndicator,
             attackIndicator: attackIndicator,
             originalColor: playerData.color, // Store original color
@@ -1688,6 +1710,12 @@ class GameScene extends Phaser.Scene {
         
         // Update position
         player.body.setPosition(playerData.x, playerData.y);
+        
+        // Update eye positions for placeholder characters
+        if (player.leftEye && player.rightEye) {
+            player.leftEye.setPosition(playerData.x - 8, playerData.y - 10);
+            player.rightEye.setPosition(playerData.x + 8, playerData.y - 10);
+        }
         
         // Update blocking indicator
         player.blockIndicator.setPosition(playerData.x, playerData.y);

@@ -1609,14 +1609,6 @@ class GameScene extends Phaser.Scene {
             body.setStrokeStyle(2, 0x000000);
         }
         
-        // Create player face direction indicator
-        const face = this.add.circle(
-            playerData.x + (playerData.facingRight ? 10 : -10), 
-            playerData.y - 15, 
-            5, 
-            0xFFFFFF
-        );
-        
         // Create blocking indicator
         const blockIndicator = this.add.rectangle(
             playerData.x,
@@ -1638,7 +1630,6 @@ class GameScene extends Phaser.Scene {
         attackIndicator.setStrokeStyle(2, 0xFF0000);
         
         player.add(body);
-        player.add(face);
         player.add(blockIndicator);
         player.add(attackIndicator);
         
@@ -1646,7 +1637,6 @@ class GameScene extends Phaser.Scene {
         this.players[playerId] = {
             group: player,
             body: body,
-            face: face,
             blockIndicator: blockIndicator,
             attackIndicator: attackIndicator,
             originalColor: playerData.color, // Store original color
@@ -1698,12 +1688,6 @@ class GameScene extends Phaser.Scene {
         
         // Update position
         player.body.setPosition(playerData.x, playerData.y);
-        
-        // Update face direction
-        player.face.setPosition(
-            playerData.x + (playerData.facingRight ? 10 : -10),
-            playerData.y - 15
-        );
         
         // Update blocking indicator
         player.blockIndicator.setPosition(playerData.x, playerData.y);

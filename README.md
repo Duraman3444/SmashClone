@@ -19,16 +19,23 @@ A multiplayer Super Smash Bros clone built with Phaser 3 and Socket.io. This is 
 ### Player 1 (Red)
 - **Movement**: WASD or Arrow Keys
 - **Jump**: W, Up Arrow, or Spacebar
-- **Regular Attack**: E key
-- **Special Attack**: R key
+- **Regular Attack**: E key + direction key (WASD/Arrow Keys)
+- **Special Attack**: R key + direction key (WASD/Arrow Keys)
 - **Block**: T key
 
 ### Player 2 (Blue)  
 - **Movement**: IJKL keys
 - **Jump**: I key
-- **Regular Attack**: O key
-- **Special Attack**: P key
+- **Regular Attack**: O key + direction key (IJKL)
+- **Special Attack**: P key + direction key (IJKL)
 - **Block**: [ key
+
+### Directional Attacks
+- **Up Attack**: Hold up + attack key (W/Up Arrow + E/R for P1, I + O/P for P2)
+- **Down Attack**: Hold down + attack key (S/Down Arrow + E/R for P1, K + O/P for P2)
+- **Left Attack**: Hold left + attack key (A/Left Arrow + E/R for P1, J + O/P for P2)
+- **Right Attack**: Hold right + attack key (D/Right Arrow + E/R for P1, L + O/P for P2)
+- **Forward Attack**: Attack key alone (faces opponent direction)
 
 ### Debug
 - **H**: Toggle debug log overlay

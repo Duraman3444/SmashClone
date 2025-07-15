@@ -28,8 +28,8 @@ class MenuScene extends Phaser.Scene {
         });
         
         // Add instruction text
-        this.add.text(width/2, height*0.75, 'Player 1: WASD + W/Up Arrow/Spacebar to jump + E to attack + R for special + T to block\nPlayer 2: IJKL + I to jump + O to attack + P for special + [ to block', {
-            fontSize:'16px', 
+        this.add.text(width/2, height*0.75, 'Player 1: WASD + W/Up Arrow/Spacebar to jump + E + direction to attack + R + direction for special + T to block\nPlayer 2: IJKL + I to jump + O + direction to attack + P + direction for special + [ to block\nDirectional Attacks: Hold movement key + attack key for Up/Down/Left/Right attacks', {
+            fontSize:'14px', 
             color:'#888888', 
             align:'center'
         }).setOrigin(0.5);

@@ -209,6 +209,10 @@ class GameScene extends Phaser.Scene {
                 this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W),
                 this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP)
             ],
+            down: [
+                this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S),
+                this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN)
+            ],
             jump: [
                 this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE),
                 this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W),
@@ -224,6 +228,7 @@ class GameScene extends Phaser.Scene {
             left: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.J),
             right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.L),
             up: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.I),
+            down: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K),
             jump: [
                 this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.I)
             ],
@@ -236,13 +241,37 @@ class GameScene extends Phaser.Scene {
         // Regular attacks - can be spammed (no key event, handled in update loop)
         // Special attacks - single key press with cooldown
         this.player1Keys.specialAttack.on('down', () => {
-            Logger.log('Player 1 special attack');
-            this.handlePlayerAttack('player1', 'special');
+            // Determine attack direction based on held movement keys
+            let direction = 'forward';
+            if (this.isKeyDown(this.player1Keys.up)) {
+                direction = 'up';
+            } else if (this.isKeyDown(this.player1Keys.down)) {
+                direction = 'down';
+            } else if (this.isKeyDown(this.player1Keys.left)) {
+                direction = 'left';
+            } else if (this.isKeyDown(this.player1Keys.right)) {
+                direction = 'right';
+            }
+            
+            Logger.log(`Player 1 special attack ${direction}`);
+            this.handlePlayerAttack('player1', 'special', direction);
         });
         
         this.player2Keys.specialAttack.on('down', () => {
-            Logger.log('Player 2 special attack');
-            this.handlePlayerAttack('player2', 'special');
+            // Determine attack direction based on held movement keys
+            let direction = 'forward';
+            if (this.isKeyDown(this.player2Keys.up)) {
+                direction = 'up';
+            } else if (this.isKeyDown(this.player2Keys.down)) {
+                direction = 'down';
+            } else if (this.isKeyDown(this.player2Keys.left)) {
+                direction = 'left';
+            } else if (this.isKeyDown(this.player2Keys.right)) {
+                direction = 'right';
+            }
+            
+            Logger.log(`Player 2 special attack ${direction}`);
+            this.handlePlayerAttack('player2', 'special', direction);
         });
         
         // Set up jump key events for Player 1 (Spacebar + W)
@@ -275,7 +304,7 @@ class GameScene extends Phaser.Scene {
         }
     }
     
-    handlePlayerAttack(playerId, attackType) {
+    handlePlayerAttack(playerId, attackType, direction = 'forward') {
         const playerData = this.localPlayers[playerId];
         if (!playerData || playerData.eliminated) return;
         
@@ -308,6 +337,7 @@ class GameScene extends Phaser.Scene {
         // Set attack state
         playerData.isAttacking = true;
         playerData.attackType = attackType;
+        playerData.attackDirection = direction;
         playerCooldown.isInAttack = true;
         
         // Attack properties based on type
@@ -324,8 +354,10 @@ class GameScene extends Phaser.Scene {
             duration = 300;        // Regular duration
         }
         
+        Logger.log(`${playerId} ${attackType} attack ${direction}`);
+        
         // Check for hits on other players
-        this.checkPlayerHits(playerId, damage, knockback, range);
+        this.checkPlayerHits(playerId, damage, knockback, range, direction);
         
         // Update visual
         this.updatePlayer(playerId, playerData);
@@ -335,6 +367,7 @@ class GameScene extends Phaser.Scene {
             if (playerData && !playerData.eliminated) {
                 playerData.isAttacking = false;
                 playerData.attackType = null;
+                playerData.attackDirection = null;
                 playerCooldown.isInAttack = false;
                 this.updatePlayer(playerId, playerData);
             }
@@ -427,14 +460,36 @@ class GameScene extends Phaser.Scene {
     }
     
     // Check for hits between players
-    checkPlayerHits(attackerId, damage, knockback, range) {
+    checkPlayerHits(attackerId, damage, knockback, range, direction) {
         const attacker = this.localPlayers[attackerId];
         if (!attacker) return;
         
-        // Get attack position
-        const attackDirection = attacker.facingRight ? 1 : -1;
-        const attackX = attacker.x + (attackDirection * (range / 2));
-        const attackY = attacker.y;
+        // Calculate attack position based on direction
+        let attackX, attackY;
+        
+        switch (direction) {
+            case 'up':
+                attackX = attacker.x;
+                attackY = attacker.y - range / 2;
+                break;
+            case 'down':
+                attackX = attacker.x;
+                attackY = attacker.y + range / 2;
+                break;
+            case 'left':
+                attackX = attacker.x - range / 2;
+                attackY = attacker.y;
+                break;
+            case 'right':
+                attackX = attacker.x + range / 2;
+                attackY = attacker.y;
+                break;
+            default: // forward
+                const attackDirection = attacker.facingRight ? 1 : -1;
+                attackX = attacker.x + (attackDirection * (range / 2));
+                attackY = attacker.y;
+                break;
+        }
         
         // Check all other players
         Object.keys(this.localPlayers).forEach(playerId => {
@@ -443,9 +498,18 @@ class GameScene extends Phaser.Scene {
             const target = this.localPlayers[playerId];
             if (!target || target.eliminated) return;
             
-            // Calculate distance
-            const distance = Math.abs(target.x - attackX);
-            const yDistance = Math.abs(target.y - attackY);
+            // Calculate distance based on attack direction
+            let distance, yDistance;
+            
+            if (direction === 'up' || direction === 'down') {
+                // Vertical attacks - check Y distance primarily
+                distance = Math.abs(target.y - attackY);
+                yDistance = Math.abs(target.x - attackX);
+            } else {
+                // Horizontal attacks - check X distance primarily
+                distance = Math.abs(target.x - attackX);
+                yDistance = Math.abs(target.y - attackY);
+            }
             
             // Check if hit connects
             if (distance < range && yDistance < 80) {
@@ -455,7 +519,7 @@ class GameScene extends Phaser.Scene {
                     const shieldDamage = damage * 0.5; // Shields absorb 50% damage
                     target.shieldHealth -= shieldDamage;
                     
-                    Logger.log(`${attackerId} attack blocked by ${playerId} shield (${shieldDamage} shield damage)`);
+                    Logger.log(`${attackerId} ${direction} attack blocked by ${playerId} shield (${shieldDamage} shield damage)`);
                     
                     // Visual feedback for blocked attack
                     this.showBlockEffect(target.x, target.y);
@@ -466,13 +530,12 @@ class GameScene extends Phaser.Scene {
                     }
                     
                     // Slight knockback even when blocked
-                    const knockbackDirection = target.x > attacker.x ? 1 : -1;
-                    target.velocityX = knockbackDirection * (knockback * 0.2);
+                    this.applyDirectionalKnockback(target, attacker, knockback * 0.2, direction);
                     
                 } else {
                     // Normal hit
-                    Logger.log(`${attackerId} hit ${playerId} with ${attacker.attackType} attack for ${damage} damage`);
-                    this.applyHit(target, attacker, damage, knockback);
+                    Logger.log(`${attackerId} hit ${playerId} with ${attacker.attackType} ${direction} attack for ${damage} damage`);
+                    this.applyHit(target, attacker, damage, knockback, direction);
                 }
             }
         });
@@ -523,17 +586,12 @@ class GameScene extends Phaser.Scene {
     }
     
     // Apply hit effects to target
-    applyHit(target, attacker, damage, knockback) {
+    applyHit(target, attacker, damage, knockback, direction) {
         // Apply damage
         target.health += damage;
         
-        // Apply knockback
-        const knockbackDirection = target.x > attacker.x ? 1 : -1;
-        const knockbackStrength = Math.min(target.health * 2 + knockback, 800);
-        
-        target.velocityX = knockbackDirection * knockbackStrength;
-        target.velocityY = -knockbackStrength * 0.3; // Slight upward knockback
-        target.isGrounded = false;
+        // Apply directional knockback
+        this.applyDirectionalKnockback(target, attacker, knockback, direction);
         
         // Visual feedback
         this.showHitEffect(target.x, target.y, damage);
@@ -545,6 +603,37 @@ class GameScene extends Phaser.Scene {
         
         // Update UI
         this.updateUI();
+    }
+    
+    // Apply directional knockback to target
+    applyDirectionalKnockback(target, attacker, knockback, direction) {
+        const knockbackStrength = Math.min(target.health * 2 + knockback, 800);
+        
+        switch (direction) {
+            case 'up':
+                target.velocityX = 0;
+                target.velocityY = -knockbackStrength;
+                break;
+            case 'down':
+                target.velocityX = 0;
+                target.velocityY = knockbackStrength * 0.5; // Reduced downward knockback
+                break;
+            case 'left':
+                target.velocityX = -knockbackStrength;
+                target.velocityY = -knockbackStrength * 0.3; // Slight upward knockback
+                break;
+            case 'right':
+                target.velocityX = knockbackStrength;
+                target.velocityY = -knockbackStrength * 0.3; // Slight upward knockback
+                break;
+            default: // forward
+                const knockbackDirection = target.x > attacker.x ? 1 : -1;
+                target.velocityX = knockbackDirection * knockbackStrength;
+                target.velocityY = -knockbackStrength * 0.3; // Slight upward knockback
+                break;
+        }
+        
+        target.isGrounded = false;
     }
     
     // Show hit effect
@@ -1184,10 +1273,43 @@ class GameScene extends Phaser.Scene {
         }
         
         // Update attack indicator
-        player.attackIndicator.setPosition(
-            playerData.x + (playerData.facingRight ? 50 : -50),
-            playerData.y
-        );
+        if (playerData.isAttacking && playerData.attackDirection) {
+            const direction = playerData.attackDirection;
+            let indicatorX = playerData.x;
+            let indicatorY = playerData.y;
+            
+            // Position attack indicator based on direction
+            switch (direction) {
+                case 'up':
+                    indicatorX = playerData.x;
+                    indicatorY = playerData.y - 50;
+                    break;
+                case 'down':
+                    indicatorX = playerData.x;
+                    indicatorY = playerData.y + 50;
+                    break;
+                case 'left':
+                    indicatorX = playerData.x - 50;
+                    indicatorY = playerData.y;
+                    break;
+                case 'right':
+                    indicatorX = playerData.x + 50;
+                    indicatorY = playerData.y;
+                    break;
+                default: // forward
+                    indicatorX = playerData.x + (playerData.facingRight ? 50 : -50);
+                    indicatorY = playerData.y;
+                    break;
+            }
+            
+            player.attackIndicator.setPosition(indicatorX, indicatorY);
+        } else {
+            // Default position for non-attacking state
+            player.attackIndicator.setPosition(
+                playerData.x + (playerData.facingRight ? 50 : -50),
+                playerData.y
+            );
+        }
         
         // Show attack indicator if attacking
         if (playerData.isAttacking) {
@@ -1327,7 +1449,19 @@ class GameScene extends Phaser.Scene {
                 
                 // Handle regular attack spam
                 if (this.player1Keys.attack.isDown) {
-                    this.handlePlayerAttack('player1', 'regular');
+                    // Determine attack direction based on held movement keys
+                    let direction = 'forward';
+                    if (this.isKeyDown(this.player1Keys.up)) {
+                        direction = 'up';
+                    } else if (this.isKeyDown(this.player1Keys.down)) {
+                        direction = 'down';
+                    } else if (this.isKeyDown(this.player1Keys.left)) {
+                        direction = 'left';
+                    } else if (this.isKeyDown(this.player1Keys.right)) {
+                        direction = 'right';
+                    }
+                    
+                    this.handlePlayerAttack('player1', 'regular', direction);
                 }
                 
                 if (moved) {
@@ -1362,7 +1496,19 @@ class GameScene extends Phaser.Scene {
                 
                 // Handle regular attack spam
                 if (this.player2Keys.attack.isDown) {
-                    this.handlePlayerAttack('player2', 'regular');
+                    // Determine attack direction based on held movement keys
+                    let direction = 'forward';
+                    if (this.isKeyDown(this.player2Keys.up)) {
+                        direction = 'up';
+                    } else if (this.isKeyDown(this.player2Keys.down)) {
+                        direction = 'down';
+                    } else if (this.isKeyDown(this.player2Keys.left)) {
+                        direction = 'left';
+                    } else if (this.isKeyDown(this.player2Keys.right)) {
+                        direction = 'right';
+                    }
+                    
+                    this.handlePlayerAttack('player2', 'regular', direction);
                 }
                 
                 if (moved) {

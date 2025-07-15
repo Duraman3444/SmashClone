@@ -179,7 +179,7 @@ class GameScene extends Phaser.Scene {
                 end: 21
             }),
             frameRate: 8,
-            repeat: 0
+            repeat: -1  // Loop jump animation continuously
         });
         
         // Attack animations (based on actual sprite sheet dimensions)
@@ -300,10 +300,25 @@ class GameScene extends Phaser.Scene {
             targetAnimation = 'meow-knight-idle';
         }
         
-        // All animations are now single-play and stick to final frame
-        // Only play new animation if it's different from current or if current animation completed
-        if (sprite.anims.currentAnim?.key !== targetAnimation || 
-            !sprite.anims.isPlaying) {
+        // Handle animation playing logic
+        // For attack animations: play once and don't restart until different animation
+        // For jump animations: loop smoothly
+        // For other animations: play once and stick to final frame
+        
+        const currentAnimKey = sprite.anims.currentAnim?.key;
+        const isCurrentlyPlaying = sprite.anims.isPlaying;
+        
+        if (currentAnimKey !== targetAnimation) {
+            // Different animation requested, play it
+            sprite.play(targetAnimation);
+        } else if (targetAnimation.includes('attack') && isCurrentlyPlaying) {
+            // Attack animation is already playing, don't restart it
+            // Let it finish and stick to final frame
+        } else if (targetAnimation === 'meow-knight-jump' && !isCurrentlyPlaying) {
+            // Jump animation should loop, restart if not playing
+            sprite.play(targetAnimation);
+        } else if (!isCurrentlyPlaying && !targetAnimation.includes('attack')) {
+            // Non-attack animation completed, restart it
             sprite.play(targetAnimation);
         }
         

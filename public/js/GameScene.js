@@ -141,6 +141,18 @@ class GameScene extends Phaser.Scene {
             player2: player2Data
         };
         
+        // Attack cooldown tracking
+        this.attackCooldowns = {
+            player1: {
+                lastSpecialAttackTime: 0,
+                isInAttack: false // Track if any attack is in progress
+            },
+            player2: {
+                lastSpecialAttackTime: 0,
+                isInAttack: false // Track if any attack is in progress
+            }
+        };
+        
         // Physics constants
         this.gravity = 1200; // Gravity strength
         this.friction = 0.8; // Ground friction
@@ -182,19 +194,11 @@ class GameScene extends Phaser.Scene {
         };
         
         // Set up attack key events
-        this.player1Keys.attack.on('down', () => {
-            Logger.log('Player 1 regular attack');
-            this.handlePlayerAttack('player1', 'regular');
-        });
-        
+        // Regular attacks - can be spammed (no key event, handled in update loop)
+        // Special attacks - single key press with cooldown
         this.player1Keys.specialAttack.on('down', () => {
             Logger.log('Player 1 special attack');
             this.handlePlayerAttack('player1', 'special');
-        });
-        
-        this.player2Keys.attack.on('down', () => {
-            Logger.log('Player 2 regular attack');
-            this.handlePlayerAttack('player2', 'regular');
         });
         
         this.player2Keys.specialAttack.on('down', () => {
@@ -236,9 +240,30 @@ class GameScene extends Phaser.Scene {
         const playerData = this.localPlayers[playerId];
         if (!playerData || playerData.eliminated) return;
         
+        const currentTime = Date.now();
+        const playerCooldown = this.attackCooldowns[playerId];
+        
+        // Check if any attack is already in progress
+        if (playerCooldown.isInAttack) {
+            Logger.log(`${playerId} attack blocked - already attacking`);
+            return;
+        }
+        
+        // Check special attack cooldown (0.5 second = 500ms)
+        if (attackType === 'special') {
+            const timeSinceLastSpecial = currentTime - playerCooldown.lastSpecialAttackTime;
+            if (timeSinceLastSpecial < 500) {
+                Logger.log(`${playerId} special attack blocked - cooldown active (${500 - timeSinceLastSpecial}ms remaining)`);
+                return;
+            }
+            // Update last special attack time
+            playerCooldown.lastSpecialAttackTime = currentTime;
+        }
+        
         // Set attack state
         playerData.isAttacking = true;
         playerData.attackType = attackType;
+        playerCooldown.isInAttack = true;
         
         // Attack properties based on type
         let damage, knockback, range, duration;
@@ -265,6 +290,7 @@ class GameScene extends Phaser.Scene {
             if (playerData && !playerData.eliminated) {
                 playerData.isAttacking = false;
                 playerData.attackType = null;
+                playerCooldown.isInAttack = false;
                 this.updatePlayer(playerId, playerData);
             }
         }, duration);
@@ -1028,6 +1054,11 @@ class GameScene extends Phaser.Scene {
                     player1.velocityX *= this.friction;
                 }
                 
+                // Handle regular attack spam
+                if (this.player1Keys.attack.isDown) {
+                    this.handlePlayerAttack('player1', 'regular');
+                }
+                
                 if (moved) {
                     this.updatePlayer('player1', player1);
                 }
@@ -1053,6 +1084,11 @@ class GameScene extends Phaser.Scene {
                 } else if (player2.isGrounded) {
                     // Apply friction when not moving on ground
                     player2.velocityX *= this.friction;
+                }
+                
+                // Handle regular attack spam
+                if (this.player2Keys.attack.isDown) {
+                    this.handlePlayerAttack('player2', 'regular');
                 }
                 
                 if (moved) {

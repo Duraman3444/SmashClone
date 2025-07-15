@@ -146,7 +146,7 @@ class GameScene extends Phaser.Scene {
         this.friction = 0.8; // Ground friction
         this.airResistance = 0.98; // Air resistance
         
-        // Player 1 controls: WASD/Arrow keys + Z for attack
+        // Player 1 controls: WASD/Arrow keys + E/R for attacks
         this.player1Keys = {
             left: [
                 this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
@@ -165,10 +165,11 @@ class GameScene extends Phaser.Scene {
                 this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W),
                 this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP)
             ],
-            attack: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z)
+            attack: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E),
+            specialAttack: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R)
         };
         
-        // Player 2 controls: IJKL + O for attack
+        // Player 2 controls: IJKL + O/P for attacks
         this.player2Keys = {
             left: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.J),
             right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.L),
@@ -177,18 +178,29 @@ class GameScene extends Phaser.Scene {
                 this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K),
                 this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.I)
             ],
-            attack: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.O)
+            attack: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.O),
+            specialAttack: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P)
         };
         
         // Set up attack key events
         this.player1Keys.attack.on('down', () => {
-            Logger.log('Player 1 attack key pressed');
-            this.handlePlayerAttack('player1');
+            Logger.log('Player 1 regular attack');
+            this.handlePlayerAttack('player1', 'regular');
+        });
+        
+        this.player1Keys.specialAttack.on('down', () => {
+            Logger.log('Player 1 special attack');
+            this.handlePlayerAttack('player1', 'special');
         });
         
         this.player2Keys.attack.on('down', () => {
-            Logger.log('Player 2 attack key pressed');
-            this.handlePlayerAttack('player2');
+            Logger.log('Player 2 regular attack');
+            this.handlePlayerAttack('player2', 'regular');
+        });
+        
+        this.player2Keys.specialAttack.on('down', () => {
+            Logger.log('Player 2 special attack');
+            this.handlePlayerAttack('player2', 'special');
         });
         
         // Set up jump key events for Player 1 (Spacebar + W)
@@ -221,19 +233,117 @@ class GameScene extends Phaser.Scene {
         }
     }
     
-    handlePlayerAttack(playerId) {
+    handlePlayerAttack(playerId, attackType) {
         const playerData = this.localPlayers[playerId];
         if (!playerData || playerData.eliminated) return;
         
+        // Set attack state
         playerData.isAttacking = true;
+        playerData.attackType = attackType;
+        
+        // Attack properties based on type
+        let damage, knockback, range, duration;
+        if (attackType === 'special') {
+            damage = 25;           // Special attacks do more damage
+            knockback = 400;       // Stronger knockback
+            range = 100;           // Longer range
+            duration = 500;        // Longer duration
+        } else {
+            damage = 15;           // Regular attack damage
+            knockback = 200;       // Regular knockback
+            range = 80;            // Regular range
+            duration = 300;        // Regular duration
+        }
+        
+        // Check for hits on other players
+        this.checkPlayerHits(playerId, damage, knockback, range);
+        
+        // Update visual
         this.updatePlayer(playerId, playerData);
         
+        // Reset attack state after duration
         setTimeout(() => {
             if (playerData && !playerData.eliminated) {
                 playerData.isAttacking = false;
+                playerData.attackType = null;
                 this.updatePlayer(playerId, playerData);
             }
-        }, 300);
+        }, duration);
+    }
+    
+    // Check for hits between players
+    checkPlayerHits(attackerId, damage, knockback, range) {
+        const attacker = this.localPlayers[attackerId];
+        if (!attacker) return;
+        
+        // Get attack position
+        const attackDirection = attacker.facingRight ? 1 : -1;
+        const attackX = attacker.x + (attackDirection * (range / 2));
+        const attackY = attacker.y;
+        
+        // Check all other players
+        Object.keys(this.localPlayers).forEach(playerId => {
+            if (playerId === attackerId) return; // Skip self
+            
+            const target = this.localPlayers[playerId];
+            if (!target || target.eliminated) return;
+            
+            // Calculate distance
+            const distance = Math.abs(target.x - attackX);
+            const yDistance = Math.abs(target.y - attackY);
+            
+            // Check if hit connects
+            if (distance < range && yDistance < 80) {
+                Logger.log(`${attackerId} hit ${playerId} with ${attacker.attackType} attack for ${damage} damage`);
+                this.applyHit(target, attacker, damage, knockback);
+            }
+        });
+    }
+    
+    // Apply hit effects to target
+    applyHit(target, attacker, damage, knockback) {
+        // Apply damage
+        target.health += damage;
+        
+        // Apply knockback
+        const knockbackDirection = target.x > attacker.x ? 1 : -1;
+        const knockbackStrength = Math.min(target.health * 2 + knockback, 800);
+        
+        target.velocityX = knockbackDirection * knockbackStrength;
+        target.velocityY = -knockbackStrength * 0.3; // Slight upward knockback
+        target.isGrounded = false;
+        
+        // Visual feedback
+        this.showHitEffect(target.x, target.y, damage);
+        
+        // Check for high damage
+        if (target.health > 100) {
+            Logger.log(`${target.id} has high damage: ${target.health}%`);
+        }
+        
+        // Update UI
+        this.updateUI();
+    }
+    
+    // Show hit effect
+    showHitEffect(x, y, damage) {
+        const hitText = this.add.text(x, y - 20, `${damage}%`, {
+            fontSize: '16px',
+            fill: '#FF0000',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+        
+        // Animate hit text
+        this.tweens.add({
+            targets: hitText,
+            y: y - 50,
+            alpha: 0,
+            duration: 1000,
+            ease: 'Power2',
+            onComplete: () => {
+                hitText.destroy();
+            }
+        });
     }
     
     // Check collision between player and platform
@@ -789,6 +899,17 @@ class GameScene extends Phaser.Scene {
         // Show attack indicator if attacking
         if (playerData.isAttacking) {
             player.attackIndicator.setAlpha(0.5);
+            
+            // Different colors and sizes for different attack types
+            if (playerData.attackType === 'special') {
+                player.attackIndicator.setFillStyle(0x9900FF); // Purple for special attacks
+                player.attackIndicator.setSize(100, 100); // Larger for special attacks
+                player.attackIndicator.setStrokeStyle(3, 0x9900FF);
+            } else {
+                player.attackIndicator.setFillStyle(0xFF0000); // Red for regular attacks
+                player.attackIndicator.setSize(80, 80); // Regular size
+                player.attackIndicator.setStrokeStyle(2, 0xFF0000);
+            }
         } else {
             player.attackIndicator.setAlpha(0);
         }

@@ -454,15 +454,53 @@ class GameScene extends Phaser.Scene {
         const overlay = this.add.rectangle(400, 300, 800, 600, 0x000000, 0.7);
         
         // Winner message
-        const winnerMessage = this.add.text(400, 250, `🎉 ${winnerName} Wins! 🎉`, {
+        const winnerMessage = this.add.text(400, 200, `🎉 ${winnerName} Wins! 🎉`, {
             fontSize: '48px',
             fill: winner ? winner.color : '#FFFFFF',
             fontStyle: 'bold'
         }).setOrigin(0.5);
         
-        // Restart instruction
-        const restartText = this.add.text(400, 350, 'Refresh the page to play again', {
+        // Button style
+        const buttonStyle = {
             fontSize: '24px',
+            backgroundColor: '#333333',
+            color: '#FFFFFF',
+            padding: { x: 20, y: 10 }
+        };
+        
+        // Rematch button
+        const rematchButton = this.add.text(300, 350, 'Rematch', buttonStyle)
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', () => {
+                Logger.log('Rematch selected');
+                this.restartGame();
+            })
+            .on('pointerover', () => {
+                rematchButton.setStyle({ backgroundColor: '#555555' });
+            })
+            .on('pointerout', () => {
+                rematchButton.setStyle({ backgroundColor: '#333333' });
+            });
+        
+        // Main menu button
+        const mainMenuButton = this.add.text(500, 350, 'Main Menu', buttonStyle)
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', () => {
+                Logger.log('Main Menu selected');
+                this.goToMainMenu();
+            })
+            .on('pointerover', () => {
+                mainMenuButton.setStyle({ backgroundColor: '#555555' });
+            })
+            .on('pointerout', () => {
+                mainMenuButton.setStyle({ backgroundColor: '#333333' });
+            });
+        
+        // Controls instruction
+        const controlsText = this.add.text(400, 420, 'Click to select an option', {
+            fontSize: '16px',
             fill: '#CCCCCC'
         }).setOrigin(0.5);
         
@@ -476,6 +514,96 @@ class GameScene extends Phaser.Scene {
             repeat: -1,
             ease: 'Power2'
         });
+        
+        // Store overlay elements for cleanup
+        this.gameOverElements = {
+            overlay: overlay,
+            winnerMessage: winnerMessage,
+            rematchButton: rematchButton,
+            mainMenuButton: mainMenuButton,
+            controlsText: controlsText
+        };
+    }
+    
+    // Restart the current game
+    restartGame() {
+        Logger.log('Restarting game');
+        
+        // Clean up game over elements
+        if (this.gameOverElements) {
+            Object.values(this.gameOverElements).forEach(element => {
+                if (element && element.destroy) {
+                    element.destroy();
+                }
+            });
+            this.gameOverElements = null;
+        }
+        
+        // Reset local players
+        if (this.localPlayers) {
+            this.localPlayers.player1.lives = 3;
+            this.localPlayers.player1.health = 0;
+            this.localPlayers.player1.x = 300;
+            this.localPlayers.player1.y = 200;
+            this.localPlayers.player1.velocityX = 0;
+            this.localPlayers.player1.velocityY = 0;
+            this.localPlayers.player1.isGrounded = false;
+            this.localPlayers.player1.eliminated = false;
+            this.localPlayers.player1.canJump = true;
+            
+            this.localPlayers.player2.lives = 3;
+            this.localPlayers.player2.health = 0;
+            this.localPlayers.player2.x = 500;
+            this.localPlayers.player2.y = 200;
+            this.localPlayers.player2.velocityX = 0;
+            this.localPlayers.player2.velocityY = 0;
+            this.localPlayers.player2.isGrounded = false;
+            this.localPlayers.player2.eliminated = false;
+            this.localPlayers.player2.canJump = true;
+        }
+        
+        // Reset visual players
+        if (this.players) {
+            Object.keys(this.players).forEach(playerId => {
+                const player = this.players[playerId];
+                if (player) {
+                    player.body.setAlpha(1);
+                    player.body.setFillStyle(player.originalColor);
+                    player.healthText.setText('0%');
+                    player.healthText.setStyle({ fill: '#fff' });
+                    player.livesText.setText('Lives: 3');
+                    player.livesText.setStyle({ fill: '#00FF00' });
+                    
+                    // Hide fall warnings
+                    if (player.fallWarning) {
+                        player.fallWarning.setVisible(false);
+                    }
+                }
+            });
+        }
+        
+        // Update UI
+        this.updateUI();
+        
+        Logger.log('Game restarted successfully');
+    }
+    
+    // Go back to main menu
+    goToMainMenu() {
+        Logger.log('Going to main menu');
+        
+        // Clean up game over elements
+        if (this.gameOverElements) {
+            Object.values(this.gameOverElements).forEach(element => {
+                if (element && element.destroy) {
+                    element.destroy();
+                }
+            });
+            this.gameOverElements = null;
+        }
+        
+        // Stop the game scene and go to menu
+        this.scene.start('MenuScene');
     }
     
     isKeyDown(keyArray) {

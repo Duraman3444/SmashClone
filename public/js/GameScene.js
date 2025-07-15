@@ -292,9 +292,9 @@ class GameScene extends Phaser.Scene {
         } else if (playerData.isDodging) {
             targetAnimation = 'meow-knight-dodge';
         } else if (playerData.isBlocking) {
-            targetAnimation = 'meow-knight-dodge';
+            targetAnimation = 'meow-knight-idle'; // Stay still when blocking
         } else if (!playerData.isGrounded) {
-            targetAnimation = 'meow-knight-jump';
+            targetAnimation = 'meow-knight-idle'; // No jump animation, move naturally
         } else if (Math.abs(playerData.velocityX) > 50) {
             // Character is moving fast enough to run
             targetAnimation = 'meow-knight-run';

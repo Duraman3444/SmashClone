@@ -347,15 +347,16 @@ class GameScene extends Phaser.Scene {
         if (!playerData || playerData.eliminated) return;
         
         const currentTime = Date.now();
+        const deltaTime = this.game.loop.delta;
         
-        // Check if shield is regenerating
+        // Check if shield is regenerating from being broken
         if (playerData.shieldRegenTime > 0) {
             if (currentTime >= playerData.shieldRegenTime) {
                 playerData.shieldHealth = 100;
                 playerData.shieldRegenTime = 0;
-                Logger.log(`${playerId} shield regenerated`);
+                Logger.log(`${playerId} shield regenerated after break`);
             } else {
-                // Cannot block while regenerating
+                // Cannot block while regenerating from break
                 playerData.isBlocking = false;
                 return;
             }
@@ -378,7 +379,6 @@ class GameScene extends Phaser.Scene {
                 
                 // Reduce shield health over time (100 health over 5 seconds = 20 per second)
                 const shieldDrainRate = 20 / 1000; // per millisecond
-                const deltaTime = this.game.loop.delta;
                 playerData.shieldHealth -= shieldDrainRate * deltaTime;
                 
                 if (playerData.shieldHealth <= 0) {
@@ -389,11 +389,18 @@ class GameScene extends Phaser.Scene {
             // Stop blocking
             if (playerData.isBlocking) {
                 playerData.isBlocking = false;
-                // Reset shield health to full if not broken
-                if (playerData.shieldHealth > 0) {
+                Logger.log(`${playerId} stopped blocking`);
+            }
+            
+            // Passive shield regeneration at 10% per second when not blocking
+            if (playerData.shieldHealth < 100 && playerData.shieldRegenTime === 0) {
+                const regenRate = 10 / 1000; // 10% per second = 0.01 per millisecond
+                playerData.shieldHealth += regenRate * deltaTime;
+                
+                // Cap at 100%
+                if (playerData.shieldHealth > 100) {
                     playerData.shieldHealth = 100;
                 }
-                Logger.log(`${playerId} stopped blocking`);
             }
         }
         

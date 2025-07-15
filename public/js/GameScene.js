@@ -162,7 +162,8 @@ class GameScene extends Phaser.Scene {
             ],
             jump: [
                 this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE),
-                this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W)
+                this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W),
+                this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP)
             ],
             attack: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z)
         };

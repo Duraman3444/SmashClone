@@ -638,6 +638,14 @@ class GameScene extends Phaser.Scene {
         });
         
         Logger.log('Stickman animations created');
+        
+        // Create Pixel Bot animations (programmatic)
+        Logger.log('Creating Pixel Bot animations');
+        
+        // Note: Pixel Bot animations will be handled programmatically
+        // We'll create different visual states by modifying the sprite parts
+        
+        Logger.log('Pixel Bot animations created');
     }
     
     // Update sprite animations based on character state
@@ -782,6 +790,24 @@ class GameScene extends Phaser.Scene {
             } else {
                 targetAnimation = 'stickman-idle';
             }
+        } else if (playerData.characterId === 'pixel-bot') {
+            // Pixel Bot animations (programmatic)
+            targetAnimation = 'pixel-bot-idle';
+            
+            // Priority order: Death > Attack > Block > Jump > Run > Idle
+            if (playerData.eliminated) {
+                targetAnimation = 'pixel-bot-death';
+            } else if (playerData.isAttacking) {
+                targetAnimation = 'pixel-bot-attack'; // Use attack animation for all attacks
+            } else if (playerData.isBlocking) {
+                targetAnimation = 'pixel-bot-block'; // Use block animation when blocking
+            } else if (!playerData.isGrounded) {
+                targetAnimation = 'pixel-bot-jump'; // Use jump animation when in air
+            } else if (Math.abs(playerData.velocityX) > 0.1) {
+                targetAnimation = 'pixel-bot-run'; // Use run animation for any movement
+            } else {
+                targetAnimation = 'pixel-bot-idle';
+            }
         } else {
             // Default fallback
             return;
@@ -792,26 +818,32 @@ class GameScene extends Phaser.Scene {
         // For jump animations: loop smoothly
         // For other animations: play once and stick to final frame
         
-        const currentAnimKey = sprite.anims.currentAnim?.key;
-        const isCurrentlyPlaying = sprite.anims.isPlaying;
-        
-        if (targetAnimation === 'STOP_ANIMATION') {
-            // Stop all animations and hold on frame 0 of idle
-            sprite.anims.stop();
-            sprite.setFrame(0); // Set to first frame of idle animation
-        } else if (currentAnimKey !== targetAnimation) {
-            // Different animation requested, stop current and play new one
-            sprite.anims.stop();
-            sprite.play(targetAnimation);
-        } else if (targetAnimation.includes('attack') && isCurrentlyPlaying) {
-            // Attack animation is already playing, don't restart it
-            // Let it finish and stick to final frame
-        } else if ((targetAnimation === 'meow-knight-jump' || targetAnimation === 'stickman-jump' || targetAnimation === 'stickman-run' || targetAnimation === 'stickman-idle') && !isCurrentlyPlaying) {
-            // Jump, run, and idle animations should loop, restart if not playing
-            sprite.play(targetAnimation);
-        } else if (!isCurrentlyPlaying && !targetAnimation.includes('attack')) {
-            // Non-attack animation completed, restart it
-            sprite.play(targetAnimation);
+        // Handle Pixel Bot animations separately (programmatic)
+        if (targetAnimation && targetAnimation.includes('pixel-bot')) {
+            this.animatePixelBot(sprite, targetAnimation);
+        } else {
+            // Handle regular sprite animations
+            const currentAnimKey = sprite.anims.currentAnim?.key;
+            const isCurrentlyPlaying = sprite.anims.isPlaying;
+            
+            if (targetAnimation === 'STOP_ANIMATION') {
+                // Stop all animations and hold on frame 0 of idle
+                sprite.anims.stop();
+                sprite.setFrame(0); // Set to first frame of idle animation
+            } else if (currentAnimKey !== targetAnimation) {
+                // Different animation requested, stop current and play new one
+                sprite.anims.stop();
+                sprite.play(targetAnimation);
+            } else if (targetAnimation.includes('attack') && isCurrentlyPlaying) {
+                // Attack animation is already playing, don't restart it
+                // Let it finish and stick to final frame
+            } else if ((targetAnimation === 'meow-knight-jump' || targetAnimation === 'stickman-jump' || targetAnimation === 'stickman-run' || targetAnimation === 'stickman-idle') && !isCurrentlyPlaying) {
+                // Jump, run, and idle animations should loop, restart if not playing
+                sprite.play(targetAnimation);
+            } else if (!isCurrentlyPlaying && !targetAnimation.includes('attack')) {
+                // Non-attack animation completed, restart it
+                sprite.play(targetAnimation);
+            }
         }
         
         // Handle damage flash effect
@@ -829,6 +861,9 @@ class GameScene extends Phaser.Scene {
                     sprite.setTint(0xAAFFAA); // Return to normal green tint
                 } else if (playerData.characterId === 'stickman') {
                     sprite.setTint(0xFFFFAA); // Return to normal yellow tint
+                } else if (playerData.characterId === 'pixel-bot') {
+                    // Pixel Bot doesn't use tint, reset colors programmatically
+                    this.animatePixelBot(sprite, 'pixel-bot-idle');
                 }
             });
         }
@@ -2409,6 +2444,16 @@ class GameScene extends Phaser.Scene {
             });
             
             Logger.log('Created Stickman sprite for stickman');
+        } else if (playerData.characterId === 'pixel-bot') {
+            // Create Pixel Bot programmatically
+            body = this.createPixelBotSprite(playerData.x, playerData.y);
+            
+            // Store animation state for Pixel Bot
+            body.pixelBotState = 'idle';
+            body.pixelBotAnimationFrame = 0;
+            body.pixelBotAnimationTime = 0;
+            
+            Logger.log('Created Pixel Bot sprite for pixel-bot');
         } else {
             // Create player body (colored rectangle) for other characters
             body = this.add.rectangle(playerData.x, playerData.y, playerData.width, playerData.height, playerData.color);
@@ -2481,10 +2526,145 @@ class GameScene extends Phaser.Scene {
             attackIndicator: attackIndicator,
             originalColor: playerData.color, // Store original color
             data: playerData,
-            isSprite: playerData.characterId === 'red-fighter' || playerData.characterId === 'finn-human' || playerData.characterId === 'blue-witch' || playerData.characterId === 'archer' || playerData.characterId === 'stickman' // Flag to track if this is a sprite
+            isSprite: playerData.characterId === 'red-fighter' || playerData.characterId === 'finn-human' || playerData.characterId === 'blue-witch' || playerData.characterId === 'archer' || playerData.characterId === 'stickman' || playerData.characterId === 'pixel-bot' // Flag to track if this is a sprite
         };
         
         Logger.log('Player created successfully');
+    }
+    
+    createPixelBotSprite(x, y) {
+        // Create a container for the Pixel Bot sprite
+        const container = this.add.container(x, y);
+        
+        // Create robot body (rectangle)
+        const body = this.add.rectangle(0, 0, 40, 50, 0xFF00FF);
+        body.setStrokeStyle(2, 0x000000);
+        
+        // Create robot head (circle)
+        const head = this.add.circle(0, -35, 15, 0xFFAAFF);
+        head.setStrokeStyle(2, 0x000000);
+        
+        // Create robot eyes (small circles)
+        const leftEye = this.add.circle(-8, -35, 3, 0x000000);
+        const rightEye = this.add.circle(8, -35, 3, 0x000000);
+        
+        // Create robot antenna (line)
+        const antenna = this.add.line(0, -50, 0, 0, 0, -10, 0xFFFFFF);
+        antenna.setLineWidth(2);
+        
+        // Create antenna tip (small circle)
+        const antennaTip = this.add.circle(0, -60, 2, 0x00FFFF);
+        
+        // Create robot arms (rectangles)
+        const leftArm = this.add.rectangle(-25, -10, 8, 20, 0xFF00FF);
+        leftArm.setStrokeStyle(1, 0x000000);
+        
+        const rightArm = this.add.rectangle(25, -10, 8, 20, 0xFF00FF);
+        rightArm.setStrokeStyle(1, 0x000000);
+        
+        // Create robot legs (rectangles)
+        const leftLeg = this.add.rectangle(-12, 35, 8, 20, 0xFF00FF);
+        leftLeg.setStrokeStyle(1, 0x000000);
+        
+        const rightLeg = this.add.rectangle(12, 35, 8, 20, 0xFF00FF);
+        rightLeg.setStrokeStyle(1, 0x000000);
+        
+        // Add all parts to container
+        container.add([body, head, leftEye, rightEye, antenna, antennaTip, leftArm, rightArm, leftLeg, rightLeg]);
+        
+        // Store references to parts for animation
+        container.pixelBotParts = {
+            body: body,
+            head: head,
+            leftEye: leftEye,
+            rightEye: rightEye,
+            antenna: antenna,
+            antennaTip: antennaTip,
+            leftArm: leftArm,
+            rightArm: rightArm,
+            leftLeg: leftLeg,
+            rightLeg: rightLeg
+        };
+        
+        return container;
+    }
+    
+    animatePixelBotDeath(sprite) {
+        // Change all colors to gray for death animation
+        if (sprite.pixelBotParts) {
+            const parts = sprite.pixelBotParts;
+            parts.body.setFillStyle(0x444444);
+            parts.head.setFillStyle(0x666666);
+            parts.leftArm.setFillStyle(0x444444);
+            parts.rightArm.setFillStyle(0x444444);
+            parts.leftLeg.setFillStyle(0x444444);
+            parts.rightLeg.setFillStyle(0x444444);
+            parts.antennaTip.setFillStyle(0x888888);
+        }
+    }
+    
+    animatePixelBot(sprite, targetAnimation) {
+        // Handle Pixel Bot programmatic animations
+        if (!sprite.pixelBotParts) return;
+        
+        const parts = sprite.pixelBotParts;
+        
+        switch (targetAnimation) {
+            case 'pixel-bot-idle':
+                // Reset to normal colors and positions
+                parts.body.setFillStyle(0xFF00FF);
+                parts.head.setFillStyle(0xFFAAFF);
+                parts.leftArm.setFillStyle(0xFF00FF);
+                parts.rightArm.setFillStyle(0xFF00FF);
+                parts.leftLeg.setFillStyle(0xFF00FF);
+                parts.rightLeg.setFillStyle(0xFF00FF);
+                parts.antennaTip.setFillStyle(0x00FFFF);
+                
+                // Gentle antenna sway
+                parts.antennaTip.x = Math.sin(Date.now() * 0.005) * 2;
+                break;
+                
+            case 'pixel-bot-run':
+                // Running animation - bob up and down
+                const bobOffset = Math.sin(Date.now() * 0.01) * 3;
+                parts.body.y = bobOffset;
+                parts.head.y = -35 + bobOffset;
+                
+                // Leg animation
+                parts.leftLeg.y = 35 + Math.sin(Date.now() * 0.02) * 2;
+                parts.rightLeg.y = 35 + Math.sin(Date.now() * 0.02 + Math.PI) * 2;
+                
+                // Arm swinging
+                parts.leftArm.y = -10 + Math.sin(Date.now() * 0.015) * 3;
+                parts.rightArm.y = -10 + Math.sin(Date.now() * 0.015 + Math.PI) * 3;
+                break;
+                
+            case 'pixel-bot-jump':
+                // Jump animation - stretch vertically
+                parts.body.scaleY = 1.2;
+                parts.head.y = -40;
+                parts.leftArm.y = -15;
+                parts.rightArm.y = -15;
+                break;
+                
+            case 'pixel-bot-attack':
+                // Attack animation - flash red and extend arms
+                parts.body.setFillStyle(0xFF0000);
+                parts.leftArm.x = -35;
+                parts.rightArm.x = 35;
+                parts.leftArm.setFillStyle(0xFF0000);
+                parts.rightArm.setFillStyle(0xFF0000);
+                break;
+                
+            case 'pixel-bot-block':
+                // Block animation - blue tint and arms up
+                parts.body.setFillStyle(0x0000FF);
+                parts.leftArm.y = -20;
+                parts.rightArm.y = -20;
+                parts.leftArm.setFillStyle(0x0000FF);
+                parts.rightArm.setFillStyle(0x0000FF);
+                break;
+        }
     }
 
     updatePlayer(playerId, playerData) {
@@ -2505,6 +2685,9 @@ class GameScene extends Phaser.Scene {
                     player.body.play('archer-death');
                 } else if (playerData.characterId === 'stickman' && player.body.anims.currentAnim?.key !== 'stickman-death') {
                     player.body.play('stickman-death');
+                } else if (playerData.characterId === 'pixel-bot') {
+                    // Pixel Bot death animation - change colors to gray
+                    this.animatePixelBotDeath(player.body);
                 } else if (playerData.characterId === 'finn-human') {
                     // Finn doesn't have death animation yet, use idle
                     player.body.play('finn-idle');

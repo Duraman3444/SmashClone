@@ -100,13 +100,13 @@ class CharacterSelectScene extends Phaser.Scene {
                 hasSprite: true
             },
             {
-                id: 'green-tank',
-                name: 'Green Tank',
-                color: '#00FF00',
-                moveSpeed: 150,
-                jumpPower: -400,
-                description: 'Slow but strong',
-                hasSprite: false
+                id: 'pixel-bot',
+                name: 'Pixel Bot',
+                color: '#FF00FF',
+                moveSpeed: 200,
+                jumpPower: -460,
+                description: 'AI-powered fighter',
+                hasSprite: true
             }
         ];
         
@@ -211,6 +211,15 @@ class CharacterSelectScene extends Phaser.Scene {
                 preview = this.add.sprite(x, y, 'stickman-preview', 0); // Use frame 0 only
                 preview.setScale(3); // Scale up for better visibility
                 preview.setTint(0xFFFFAA); // Light yellow tint to match character color
+                
+                // Add border rectangle behind the sprite
+                border = this.add.rectangle(x, y, 60, 80, 0x000000);
+                border.setStrokeStyle(2, 0x000000);
+                border.setAlpha(0); // Make fill transparent, only show border
+                border.setDepth(preview.depth - 1); // Put border behind sprite
+            } else if (character.hasSprite && character.id === 'pixel-bot') {
+                // Create programmatic preview for Pixel Bot
+                preview = this.createPixelBotPreview(x, y);
                 
                 // Add border rectangle behind the sprite
                 border = this.add.rectangle(x, y, 60, 80, 0x000000);
@@ -543,6 +552,35 @@ class CharacterSelectScene extends Phaser.Scene {
         if (this.selectedCharacters.player1 && this.selectedCharacters.player2) {
             this.startButton.setVisible(true);
         }
+    }
+
+    createPixelBotPreview(x, y) {
+        // Create a container for the Pixel Bot preview
+        const container = this.add.container(x, y);
+        
+        // Create robot body (rectangle)
+        const body = this.add.rectangle(0, 0, 40, 50, 0xFF00FF);
+        body.setStrokeStyle(2, 0x000000);
+        
+        // Create robot head (circle)
+        const head = this.add.circle(0, -35, 15, 0xFFAAFF);
+        head.setStrokeStyle(2, 0x000000);
+        
+        // Create robot eyes (small circles)
+        const leftEye = this.add.circle(-8, -35, 3, 0x000000);
+        const rightEye = this.add.circle(8, -35, 3, 0x000000);
+        
+        // Create robot antenna (line)
+        const antenna = this.add.line(0, -50, 0, 0, 0, -10, 0xFFFFFF);
+        antenna.setLineWidth(2);
+        
+        // Create antenna tip (small circle)
+        const antennaTip = this.add.circle(0, -60, 2, 0x00FFFF);
+        
+        // Add all parts to container
+        container.add([body, head, leftEye, rightEye, antenna, antennaTip]);
+        
+        return container;
     }
 
     startGame() {

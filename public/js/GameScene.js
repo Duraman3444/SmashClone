@@ -95,7 +95,7 @@ class GameScene extends Phaser.Scene {
         const player1Data = {
             id: 'player1', 
             x: 300, 
-            y: 300, 
+            y: 200, // Start higher so they fall to ground
             width: 40, 
             height: 60, 
             color: '#FF0000', 
@@ -105,14 +105,17 @@ class GameScene extends Phaser.Scene {
             isAttacking: false,
             isGrounded: false,
             velocityX: 0,
-            velocityY: 0
+            velocityY: 0,
+            jumpPower: -500, // Negative for upward movement
+            moveSpeed: 200,
+            canJump: true
         };
         
         // Create Player 2 (Blue) - Right side  
         const player2Data = {
             id: 'player2', 
             x: 500, 
-            y: 300, 
+            y: 200, // Start higher so they fall to ground
             width: 40, 
             height: 60, 
             color: '#0000FF', 
@@ -122,7 +125,10 @@ class GameScene extends Phaser.Scene {
             isAttacking: false,
             isGrounded: false,
             velocityX: 0,
-            velocityY: 0
+            velocityY: 0,
+            jumpPower: -500, // Negative for upward movement
+            moveSpeed: 200,
+            canJump: true
         };
         
         this.myPlayerId = 'player1'; // Set player 1 as "You" for UI
@@ -134,6 +140,11 @@ class GameScene extends Phaser.Scene {
             player1: player1Data,
             player2: player2Data
         };
+        
+        // Physics constants
+        this.gravity = 1200; // Gravity strength
+        this.friction = 0.8; // Ground friction
+        this.airResistance = 0.98; // Air resistance
         
         // Player 1 controls: WASD/Arrow keys + Z for attack
         this.player1Keys = {
@@ -149,6 +160,7 @@ class GameScene extends Phaser.Scene {
                 this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W),
                 this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP)
             ],
+            jump: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE),
             attack: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z)
         };
         
@@ -157,6 +169,7 @@ class GameScene extends Phaser.Scene {
             left: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.J),
             right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.L),
             up: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.I),
+            jump: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K),
             attack: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.O)
         };
         
@@ -171,7 +184,16 @@ class GameScene extends Phaser.Scene {
             this.handlePlayerAttack('player2');
         });
         
-        Logger.log('Local 2-player setup complete');
+        // Set up jump key events
+        this.player1Keys.jump.on('down', () => {
+            this.handlePlayerJump('player1');
+        });
+        
+        this.player2Keys.jump.on('down', () => {
+            this.handlePlayerJump('player2');
+        });
+        
+        Logger.log('Local 2-player setup complete with physics');
     }
     
     handlePlayerAttack(playerId) {
@@ -185,6 +207,129 @@ class GameScene extends Phaser.Scene {
             playerData.isAttacking = false;
             this.updatePlayer(playerId, playerData);
         }, 300);
+    }
+    
+    handlePlayerJump(playerId) {
+        const playerData = this.localPlayers[playerId];
+        if (!playerData) return;
+        
+        // Only jump if grounded and can jump
+        if (playerData.isGrounded && playerData.canJump) {
+            playerData.velocityY = playerData.jumpPower;
+            playerData.isGrounded = false;
+            playerData.canJump = false;
+            Logger.log(`Player ${playerId} jumped with velocity`, playerData.velocityY);
+        }
+    }
+    
+    // Check collision between player and platform
+    checkPlatformCollision(player, platform) {
+        const playerLeft = player.x - player.width / 2;
+        const playerRight = player.x + player.width / 2;
+        const playerTop = player.y - player.height / 2;
+        const playerBottom = player.y + player.height / 2;
+        
+        const platformLeft = platform.x - platform.width / 2;
+        const platformRight = platform.x + platform.width / 2;
+        const platformTop = platform.y - platform.height / 2;
+        const platformBottom = platform.y + platform.height / 2;
+        
+        // Check if player is overlapping with platform
+        if (playerRight > platformLeft && 
+            playerLeft < platformRight && 
+            playerBottom > platformTop && 
+            playerTop < platformBottom) {
+            
+            // Check if player is falling down onto platform
+            if (player.velocityY > 0 && playerTop < platformTop) {
+                return {
+                    type: 'ground',
+                    y: platformTop - player.height / 2
+                };
+            }
+        }
+        
+        return null;
+    }
+    
+    // Apply physics to a player
+    applyPhysics(playerId, deltaTime) {
+        const player = this.localPlayers[playerId];
+        if (!player) return;
+        
+        // Apply gravity
+        if (!player.isGrounded) {
+            player.velocityY += this.gravity * deltaTime;
+        }
+        
+        // Apply air resistance
+        if (!player.isGrounded) {
+            player.velocityX *= this.airResistance;
+        } else {
+            player.velocityX *= this.friction;
+        }
+        
+        // Update position based on velocity
+        player.x += player.velocityX * deltaTime;
+        player.y += player.velocityY * deltaTime;
+        
+        // Check platform collisions
+        let onGround = false;
+        
+        for (const platform of this.platforms) {
+            const collision = this.checkPlatformCollision(player, platform);
+            if (collision && collision.type === 'ground') {
+                player.y = collision.y;
+                player.velocityY = 0;
+                player.isGrounded = true;
+                player.canJump = true;
+                onGround = true;
+                break;
+            }
+        }
+        
+        // If not on any platform, player is in air
+        if (!onGround) {
+            player.isGrounded = false;
+        }
+        
+        // Keep players within stage bounds
+        if (player.x < player.width / 2) {
+            player.x = player.width / 2;
+            player.velocityX = 0;
+        }
+        if (player.x > 800 - player.width / 2) {
+            player.x = 800 - player.width / 2;
+            player.velocityX = 0;
+        }
+        
+        // Respawn if player falls off stage
+        if (player.y > 650) {
+            Logger.log(`Player ${playerId} fell off stage, respawning`);
+            this.respawnPlayer(playerId);
+        }
+    }
+    
+    // Respawn player
+    respawnPlayer(playerId) {
+        const player = this.localPlayers[playerId];
+        if (!player) return;
+        
+        player.lives--;
+        player.health = 0;
+        player.x = playerId === 'player1' ? 300 : 500;
+        player.y = 200;
+        player.velocityX = 0;
+        player.velocityY = 0;
+        player.isGrounded = false;
+        player.canJump = true;
+        
+        Logger.log(`Player ${playerId} respawned. Lives remaining: ${player.lives}`);
+        
+        if (player.lives <= 0) {
+            Logger.log(`Player ${playerId} eliminated!`);
+            // Could add game over logic here
+        }
     }
     
     isKeyDown(keyArray) {
@@ -354,6 +499,18 @@ class GameScene extends Phaser.Scene {
             player.body.setStrokeStyle(2, 0x000000);
         }
         
+        // Show grounded status with visual cue
+        if (playerData.isGrounded) {
+            player.body.setStrokeStyle(3, 0x00FF00); // Green outline when grounded
+        } else {
+            player.body.setStrokeStyle(2, 0xFF0000); // Red outline when in air
+        }
+        
+        // Override for current player highlight
+        if (playerId === this.myPlayerId) {
+            player.body.setStrokeStyle(3, 0xFFFF00); // Yellow outline for current player
+        }
+        
         // Update stored data
         player.data = playerData;
     }
@@ -433,24 +590,28 @@ class GameScene extends Phaser.Scene {
             const player1 = this.localPlayers['player1'];
             const player2 = this.localPlayers['player2'];
 
+            // Calculate delta time in seconds
+            const deltaTime = this.game.loop.delta / 1000;
+
+            // Apply physics to players
+            this.applyPhysics('player1', deltaTime);
+            this.applyPhysics('player2', deltaTime);
+
             // Handle Player 1 movement (WASD/Arrow keys)
             if (player1) {
-                const speed = 2;
                 let moved = false;
                 
                 if (this.isKeyDown(this.player1Keys.left)) {
-                    player1.x -= speed;
+                    player1.velocityX = -player1.moveSpeed;
                     player1.facingRight = false;
                     moved = true;
-                }
-                if (this.isKeyDown(this.player1Keys.right)) {
-                    player1.x += speed;
+                } else if (this.isKeyDown(this.player1Keys.right)) {
+                    player1.velocityX = player1.moveSpeed;
                     player1.facingRight = true;
                     moved = true;
-                }
-                if (this.isKeyDown(this.player1Keys.up)) {
-                    player1.y -= speed;
-                    moved = true;
+                } else if (player1.isGrounded) {
+                    // Apply friction when not moving on ground
+                    player1.velocityX *= this.friction;
                 }
                 
                 if (moved) {
@@ -460,28 +621,29 @@ class GameScene extends Phaser.Scene {
 
             // Handle Player 2 movement (IJKL)
             if (player2) {
-                const speed = 2;
                 let moved = false;
                 
                 if (this.isKeyDown(this.player2Keys.left)) {
-                    player2.x -= speed;
+                    player2.velocityX = -player2.moveSpeed;
                     player2.facingRight = false;
                     moved = true;
-                }
-                if (this.isKeyDown(this.player2Keys.right)) {
-                    player2.x += speed;
+                } else if (this.isKeyDown(this.player2Keys.right)) {
+                    player2.velocityX = player2.moveSpeed;
                     player2.facingRight = true;
                     moved = true;
-                }
-                if (this.isKeyDown(this.player2Keys.up)) {
-                    player2.y -= speed;
-                    moved = true;
+                } else if (player2.isGrounded) {
+                    // Apply friction when not moving on ground
+                    player2.velocityX *= this.friction;
                 }
                 
                 if (moved) {
                     this.updatePlayer('player2', player2);
                 }
             }
+
+            // Update visual representation of both players
+            this.updatePlayer('player1', player1);
+            this.updatePlayer('player2', player2);
         }
         
         // Handle continuous input for multiplayer

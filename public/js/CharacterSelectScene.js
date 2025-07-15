@@ -12,8 +12,11 @@ class CharacterSelectScene extends Phaser.Scene {
     preload() {
         Logger.log('CharacterSelectScene preload - Loading character preview images');
         
-        // Load Meow Knight idle sprite as static image (just first frame)
-        this.load.image('meow-knight-preview', 'assets/characters/Meow Knight/Meow-Knight_Idle.png');
+        // Load Meow Knight idle sprite sheet to get first frame only
+        this.load.spritesheet('meow-knight-preview', 'assets/characters/Meow Knight/Meow-Knight_Idle.png', {
+            frameWidth: 16,
+            frameHeight: 16  // 16x146 = 9 frames of 16x16
+        });
     }
 
     create() {
@@ -121,7 +124,7 @@ class CharacterSelectScene extends Phaser.Scene {
             // Create character preview (static image for red-fighter only, rectangle for others)
             let border = null;
             if (character.hasSprite && character.id === 'red-fighter') {
-                preview = this.add.image(x, y, 'meow-knight-preview');
+                preview = this.add.sprite(x, y, 'meow-knight-preview', 0); // Use frame 0 only
                 preview.setScale(4); // Scale up for better visibility
                 preview.setTint(0xFFAAAA); // Light red tint to match character color
                 

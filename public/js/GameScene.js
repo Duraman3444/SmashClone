@@ -1085,8 +1085,6 @@ class GameScene extends Phaser.Scene {
                 if (player) {
                     player.body.setAlpha(1);
                     player.body.setFillStyle(player.originalColor);
-                    player.livesText.setText('Lives: 3');
-                    player.livesText.setStyle({ fill: '#00FF00' });
                     player.blockIndicator.setAlpha(0);
                     
                     // Hide fall warnings
@@ -1335,15 +1333,6 @@ class GameScene extends Phaser.Scene {
             0xFFFFFF
         );
         
-        // Create lives display
-        const livesText = this.add.text(
-            playerData.x, 
-            playerData.y + 35, 
-            `Lives: ${playerData.lives}`, 
-            { fontSize: '12px', fill: '#fff' }
-        );
-        livesText.setOrigin(0.5);
-        
         // Create blocking indicator
         const blockIndicator = this.add.rectangle(
             playerData.x,
@@ -1366,7 +1355,6 @@ class GameScene extends Phaser.Scene {
         
         player.add(body);
         player.add(face);
-        player.add(livesText);
         player.add(blockIndicator);
         player.add(attackIndicator);
         
@@ -1375,7 +1363,6 @@ class GameScene extends Phaser.Scene {
             group: player,
             body: body,
             face: face,
-            livesText: livesText,
             blockIndicator: blockIndicator,
             attackIndicator: attackIndicator,
             originalColor: playerData.color, // Store original color
@@ -1393,8 +1380,6 @@ class GameScene extends Phaser.Scene {
         if (playerData.eliminated) {
             player.body.setAlpha(0.3); // Make eliminated player semi-transparent
             player.body.setFillStyle(0x888888); // Gray out eliminated player
-            player.livesText.setText('ELIMINATED');
-            player.livesText.setStyle({ fill: '#FF0000' });
             return; // Don't update position/other properties for eliminated players
         }
         
@@ -1411,19 +1396,6 @@ class GameScene extends Phaser.Scene {
             playerData.x + (playerData.facingRight ? 10 : -10),
             playerData.y - 15
         );
-        
-        // Update lives display with emphasis
-        player.livesText.setPosition(playerData.x, playerData.y + 35);
-        player.livesText.setText(`Lives: ${playerData.lives}`);
-        
-        // Color code lives based on remaining count
-        if (playerData.lives <= 1) {
-            player.livesText.setStyle({ fill: '#FF0000' }); // Red for critical
-        } else if (playerData.lives <= 2) {
-            player.livesText.setStyle({ fill: '#FFFF00' }); // Yellow for warning
-        } else {
-            player.livesText.setStyle({ fill: '#00FF00' }); // Green for safe
-        }
         
         // Update blocking indicator
         player.blockIndicator.setPosition(playerData.x, playerData.y);

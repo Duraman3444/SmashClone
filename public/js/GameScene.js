@@ -156,6 +156,75 @@ class GameScene extends Phaser.Scene {
             frameWidth: 32,
             frameHeight: 32  // Blue_witch damage frames
         });
+        
+        // Load Archer sprite sheets
+        Logger.log('GameScene preload - Loading Archer sprites');
+        this.load.spritesheet('archer-idle', 'assets/characters/Archer/Idle and running.png', {
+            frameWidth: 64,
+            frameHeight: 64  // Archer idle and running frames - adjusted size
+        });
+        
+        this.load.spritesheet('archer-run', 'assets/characters/Archer/Idle and running.png', {
+            frameWidth: 64,
+            frameHeight: 64  // Archer running frames (same file as idle) - adjusted size
+        });
+        
+        this.load.spritesheet('archer-jump', 'assets/characters/Archer/Jumping.png', {
+            frameWidth: 64,
+            frameHeight: 64  // Archer jumping frames - adjusted size
+        });
+        
+        this.load.spritesheet('archer-attack', 'assets/characters/Archer/Normal Attack.png', {
+            frameWidth: 64,
+            frameHeight: 64  // Archer regular attack frames - adjusted size
+        });
+        
+        this.load.spritesheet('archer-attack-low', 'assets/characters/Archer/Low attack.png', {
+            frameWidth: 64,
+            frameHeight: 64  // Archer down special attack frames - adjusted size
+        });
+        
+        this.load.spritesheet('archer-attack-high', 'assets/characters/Archer/High Attack.png', {
+            frameWidth: 64,
+            frameHeight: 64  // Archer up special attack frames - adjusted size
+        });
+        
+        this.load.spritesheet('archer-dash', 'assets/characters/Archer/Dash.png', {
+            frameWidth: 64,
+            frameHeight: 64  // Archer dash frames - adjusted size
+        });
+        
+        this.load.spritesheet('archer-death', 'assets/characters/Archer/death.png', {
+            frameWidth: 64,
+            frameHeight: 64  // Archer death frames - adjusted size
+        });
+        
+        // Load Stickman sprite sheets
+        Logger.log('GameScene preload - Loading Stickman sprites');
+        this.load.spritesheet('stickman-idle', 'assets/characters/StickmanPack/Idle/Thin.png', {
+            frameWidth: 32,
+            frameHeight: 32  // Stickman idle frames
+        });
+        
+        this.load.spritesheet('stickman-run', 'assets/characters/StickmanPack/Run/Run.png', {
+            frameWidth: 32,
+            frameHeight: 32  // Stickman run frames
+        });
+        
+        this.load.spritesheet('stickman-jump', 'assets/characters/StickmanPack/Jump/Jump.png', {
+            frameWidth: 32,
+            frameHeight: 32  // Stickman jump frames
+        });
+        
+        this.load.spritesheet('stickman-punch', 'assets/characters/StickmanPack/Punch/Punch.png', {
+            frameWidth: 32,
+            frameHeight: 32  // Stickman punch frames
+        });
+        
+        this.load.spritesheet('stickman-death', 'assets/characters/StickmanPack/Death/Death.png', {
+            frameWidth: 32,
+            frameHeight: 32  // Stickman death frames
+        });
     }
 
     create() {
@@ -416,6 +485,159 @@ class GameScene extends Phaser.Scene {
         });
         
         Logger.log('Blue_witch animations created');
+        
+        // Create Archer animations
+        Logger.log('Creating Archer animations');
+        
+        // Archer idle animation (single frame - no swapping)
+        this.anims.create({
+            key: 'archer-idle',
+            frames: this.anims.generateFrameNumbers('archer-idle', { 
+                start: 0, 
+                end: 0  // Single frame only
+            }),
+            frameRate: 1,
+            repeat: 0  // No repeat - completely static
+        });
+        
+        // Archer run animation (single frame for stability)
+        this.anims.create({
+            key: 'archer-run',
+            frames: this.anims.generateFrameNumbers('archer-run', { 
+                start: 1, 
+                end: 1  // Single frame only
+            }),
+            frameRate: 1,
+            repeat: 0  // No repeat - completely static
+        });
+        
+        // Archer jump animation (keep as is - user said jumping is fine)
+        this.anims.create({
+            key: 'archer-jump',
+            frames: this.anims.generateFrameNumbers('archer-jump', { 
+                start: 0, 
+                end: 2  // Keep jumping animation
+            }),
+            frameRate: 6,
+            repeat: 0
+        });
+        
+        // Archer regular attack animation (single frame)
+        this.anims.create({
+            key: 'archer-attack',
+            frames: this.anims.generateFrameNumbers('archer-attack', { 
+                start: 0, 
+                end: 0  // Single frame only
+            }),
+            frameRate: 1,
+            repeat: 0
+        });
+        
+        // Archer down special attack (single frame)
+        this.anims.create({
+            key: 'archer-attack-low',
+            frames: this.anims.generateFrameNumbers('archer-attack-low', { 
+                start: 0, 
+                end: 0  // Single frame only
+            }),
+            frameRate: 1,
+            repeat: 0
+        });
+        
+        // Archer up special attack (single frame)
+        this.anims.create({
+            key: 'archer-attack-high',
+            frames: this.anims.generateFrameNumbers('archer-attack-high', { 
+                start: 0, 
+                end: 0  // Single frame only
+            }),
+            frameRate: 1,
+            repeat: 0
+        });
+        
+        // Archer dash animation (single frame)
+        this.anims.create({
+            key: 'archer-dash',
+            frames: this.anims.generateFrameNumbers('archer-dash', { 
+                start: 0, 
+                end: 0  // Single frame only
+            }),
+            frameRate: 1,
+            repeat: 0
+        });
+        
+        // Archer death animation (single frame)
+        this.anims.create({
+            key: 'archer-death',
+            frames: this.anims.generateFrameNumbers('archer-death', { 
+                start: 0, 
+                end: 0  // Single frame only
+            }),
+            frameRate: 1,
+            repeat: 0
+        });
+        
+        Logger.log('Archer animations created');
+        
+        // Create Stickman animations
+        Logger.log('Creating Stickman animations');
+        
+        // Stickman idle animation (single frame - static)
+        this.anims.create({
+            key: 'stickman-idle',
+            frames: this.anims.generateFrameNumbers('stickman-idle', { 
+                start: 0, 
+                end: 0  // Single frame only
+            }),
+            frameRate: 1,
+            repeat: 0  // No repeat - completely static
+        });
+        
+        // Stickman run animation (single frame - static)
+        this.anims.create({
+            key: 'stickman-run',
+            frames: this.anims.generateFrameNumbers('stickman-run', { 
+                start: 0, 
+                end: 0  // Single frame only
+            }),
+            frameRate: 1,
+            repeat: 0  // No repeat - completely static
+        });
+        
+        // Stickman jump animation (single frame - static)
+        this.anims.create({
+            key: 'stickman-jump',
+            frames: this.anims.generateFrameNumbers('stickman-jump', { 
+                start: 0, 
+                end: 0  // Single frame only
+            }),
+            frameRate: 1,
+            repeat: 0  // No repeat - completely static
+        });
+        
+        // Stickman punch animation (single frame - static)
+        this.anims.create({
+            key: 'stickman-punch',
+            frames: this.anims.generateFrameNumbers('stickman-punch', { 
+                start: 0, 
+                end: 0  // Single frame only
+            }),
+            frameRate: 1,
+            repeat: 0  // No repeat - completely static
+        });
+        
+        // Stickman death animation (single frame - static)
+        this.anims.create({
+            key: 'stickman-death',
+            frames: this.anims.generateFrameNumbers('stickman-death', { 
+                start: 0, 
+                end: 0  // Single frame only
+            }),
+            frameRate: 1,
+            repeat: 0  // No repeat - completely static
+        });
+        
+        Logger.log('Stickman animations created');
     }
     
     // Update sprite animations based on character state
@@ -509,6 +731,57 @@ class GameScene extends Phaser.Scene {
             } else {
                 targetAnimation = 'blue-witch-idle';
             }
+        } else if (playerData.characterId === 'archer') {
+            // Archer animations
+            targetAnimation = 'archer-idle';
+            
+            // Priority order: Death > Attack > Block > Jump > Run > Idle
+            if (playerData.eliminated) {
+                targetAnimation = 'archer-death';
+            } else if (playerData.isAttacking) {
+                if (playerData.attackType === 'special') {
+                    // Directional special attacks for archer
+                    switch (playerData.attackDirection) {
+                        case 'up':
+                            targetAnimation = 'archer-attack-high'; // High attack for up special
+                            break;
+                        case 'down':
+                            targetAnimation = 'archer-attack-low'; // Low attack for down special
+                            break;
+                        default:
+                            targetAnimation = 'archer-attack'; // Regular attack animation for forward special
+                            break;
+                    }
+                } else {
+                    targetAnimation = 'archer-attack'; // Regular attack animation
+                }
+            } else if (playerData.isBlocking) {
+                targetAnimation = 'STOP_ANIMATION'; // Stop animation when blocking
+            } else if (!playerData.isGrounded) {
+                targetAnimation = 'archer-jump'; // Use jump animation when in air
+            } else if (Math.abs(playerData.velocityX) > 50) {
+                targetAnimation = 'archer-run'; // Use run animation when moving
+            } else {
+                targetAnimation = 'archer-idle';
+            }
+        } else if (playerData.characterId === 'stickman') {
+            // Stickman animations
+            targetAnimation = 'stickman-idle';
+            
+            // Priority order: Death > Attack > Block > Jump > Run > Idle
+            if (playerData.eliminated) {
+                targetAnimation = 'stickman-death';
+            } else if (playerData.isAttacking) {
+                targetAnimation = 'stickman-punch'; // Use punch animation for all attacks
+            } else if (playerData.isBlocking) {
+                targetAnimation = 'STOP_ANIMATION'; // Stop animation when blocking
+            } else if (!playerData.isGrounded) {
+                targetAnimation = 'stickman-jump'; // Use jump animation when in air
+            } else if (Math.abs(playerData.velocityX) > 50) {
+                targetAnimation = 'stickman-run'; // Use run animation when moving
+            } else {
+                targetAnimation = 'stickman-idle';
+            }
         } else {
             // Default fallback
             return;
@@ -551,6 +824,8 @@ class GameScene extends Phaser.Scene {
                     sprite.setTint(0xAADDFF); // Return to normal blue tint
                 } else if (playerData.characterId === 'blue-witch') {
                     sprite.setTint(0xCCAAFF); // Return to normal purple tint
+                } else if (playerData.characterId === 'archer') {
+                    sprite.setTint(0xAAFFAA); // Return to normal green tint
                 }
             });
         }
@@ -2067,6 +2342,70 @@ class GameScene extends Phaser.Scene {
             });
             
             Logger.log('Created Blue_witch sprite for blue-witch');
+        } else if (playerData.characterId === 'archer') {
+            // Create player body using Archer sprite
+            body = this.add.sprite(playerData.x, playerData.y, 'archer-idle');
+            body.setScale(1.5); // Reduced scale to fix sprite display issues
+            body.play('archer-idle'); // Start with idle animation
+            
+            // Set tint to maintain color identification (subtle green tint)
+            body.setTint(0xAAFFAA); // Light green tint
+            
+            // Add event listener for when attack animations complete
+            body.on('animationcomplete', (animation, frame) => {
+                if (animation.key.includes('attack')) {
+                    // Attack animation completed, clear the attack state
+                    const playerCooldown = this.attackCooldowns[playerId];
+                    const playerData = this.localPlayers[playerId];
+                    
+                    if (playerCooldown) {
+                        playerCooldown.isInAttack = false;
+                    }
+                    
+                    if (playerData && !playerData.eliminated) {
+                        playerData.isAttacking = false;
+                        playerData.attackType = null;
+                        playerData.attackDirection = null;
+                        this.updatePlayer(playerId, playerData);
+                    }
+                    
+                    Logger.log(`${playerId} attack animation completed - can attack again`);
+                }
+            });
+            
+            Logger.log('Created Archer sprite for archer');
+        } else if (playerData.characterId === 'stickman') {
+            // Create player body using Stickman sprite
+            body = this.add.sprite(playerData.x, playerData.y, 'stickman-idle');
+            body.setScale(3); // Scale up the 32x32 sprite to be more visible
+            body.play('stickman-idle'); // Start with idle animation
+            
+            // Set tint to maintain color identification (subtle yellow tint)
+            body.setTint(0xFFFFAA); // Light yellow tint
+            
+            // Add event listener for when attack animations complete
+            body.on('animationcomplete', (animation, frame) => {
+                if (animation.key.includes('punch')) {
+                    // Attack animation completed, clear the attack state
+                    const playerCooldown = this.attackCooldowns[playerId];
+                    const playerData = this.localPlayers[playerId];
+                    
+                    if (playerCooldown) {
+                        playerCooldown.isInAttack = false;
+                    }
+                    
+                    if (playerData && !playerData.eliminated) {
+                        playerData.isAttacking = false;
+                        playerData.attackType = null;
+                        playerData.attackDirection = null;
+                        this.updatePlayer(playerId, playerData);
+                    }
+                    
+                    Logger.log(`${playerId} punch animation completed - can attack again`);
+                }
+            });
+            
+            Logger.log('Created Stickman sprite for stickman');
         } else {
             // Create player body (colored rectangle) for other characters
             body = this.add.rectangle(playerData.x, playerData.y, playerData.width, playerData.height, playerData.color);
@@ -2076,7 +2415,7 @@ class GameScene extends Phaser.Scene {
         // Create eyes for placeholder characters (but not sprites)
         let leftEye = null;
         let rightEye = null;
-        if (playerData.characterId !== 'red-fighter' && playerData.characterId !== 'finn-human' && playerData.characterId !== 'blue-witch') {
+        if (playerData.characterId !== 'red-fighter' && playerData.characterId !== 'finn-human' && playerData.characterId !== 'blue-witch' && playerData.characterId !== 'archer' && playerData.characterId !== 'stickman') {
             leftEye = this.add.circle(
                 playerData.x - 8,
                 playerData.y - 10,
@@ -2139,7 +2478,7 @@ class GameScene extends Phaser.Scene {
             attackIndicator: attackIndicator,
             originalColor: playerData.color, // Store original color
             data: playerData,
-            isSprite: playerData.characterId === 'red-fighter' || playerData.characterId === 'finn-human' || playerData.characterId === 'blue-witch' // Flag to track if this is a sprite
+            isSprite: playerData.characterId === 'red-fighter' || playerData.characterId === 'finn-human' || playerData.characterId === 'blue-witch' || playerData.characterId === 'archer' || playerData.characterId === 'stickman' // Flag to track if this is a sprite
         };
         
         Logger.log('Player created successfully');
@@ -2159,6 +2498,8 @@ class GameScene extends Phaser.Scene {
                     player.body.play('meow-knight-death');
                 } else if (playerData.characterId === 'blue-witch' && player.body.anims.currentAnim?.key !== 'blue-witch-death') {
                     player.body.play('blue-witch-death');
+                } else if (playerData.characterId === 'archer' && player.body.anims.currentAnim?.key !== 'archer-death') {
+                    player.body.play('archer-death');
                 } else if (playerData.characterId === 'finn-human') {
                     // Finn doesn't have death animation yet, use idle
                     player.body.play('finn-idle');
@@ -2195,7 +2536,8 @@ class GameScene extends Phaser.Scene {
             // Special attack animation - move the character 3 paces in the attack direction
             const scaleMultiplier = playerData.characterId === 'red-fighter' ? 4 : 
                                    playerData.characterId === 'finn-human' ? 3 : 
-                                   playerData.characterId === 'blue-witch' ? 2.5 : 3; // Different scale for different characters
+                                   playerData.characterId === 'blue-witch' ? 2.5 : 
+                                   playerData.characterId === 'archer' ? 1.5 : 3; // Updated scale for archer
             const pacesOffset = 3 * 16; // 3 paces, each pace is 16 pixels
             
             let offsetX = 0;
@@ -2265,7 +2607,8 @@ class GameScene extends Phaser.Scene {
             if (player.isSprite && playerData.attackType === 'special') {
                 const scaleMultiplier = playerData.characterId === 'red-fighter' ? 4 : 
                                        playerData.characterId === 'finn-human' ? 3 : 
-                                       playerData.characterId === 'blue-witch' ? 2.5 : 3; // Different scale for different characters
+                                       playerData.characterId === 'blue-witch' ? 2.5 : 
+                                       playerData.characterId === 'archer' ? 1.5 : 3; // Updated scale for archer
                 const pacesOffset = 3 * 16; // 3 paces, each pace is 16 pixels
                 
                 // Calculate the same position where the sprite is actually displayed

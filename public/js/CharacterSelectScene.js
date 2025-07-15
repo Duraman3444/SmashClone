@@ -29,6 +29,18 @@ class CharacterSelectScene extends Phaser.Scene {
             frameWidth: 32,
             frameHeight: 32  // Estimated frame size for Blue_witch
         });
+        
+        // Load Archer sprite sheet for preview  
+        this.load.spritesheet('archer-preview', 'assets/characters/Archer/Idle and running.png', {
+            frameWidth: 64,
+            frameHeight: 64  // Updated frame size for Archer
+        });
+        
+        // Load Stickman sprite sheet for preview
+        this.load.spritesheet('stickman-preview', 'assets/characters/StickmanPack/Idle/Thin.png', {
+            frameWidth: 32,
+            frameHeight: 32  // Estimated frame size for Stickman
+        });
     }
 
     create() {
@@ -40,7 +52,7 @@ class CharacterSelectScene extends Phaser.Scene {
         
         const { width, height } = this.scale;
         
-        // Define 4 character types
+        // Define 6 character types  
         this.characterTypes = [
             {
                 id: 'red-fighter',
@@ -70,6 +82,24 @@ class CharacterSelectScene extends Phaser.Scene {
                 hasSprite: true
             },
             {
+                id: 'archer',
+                name: 'Archer',
+                color: '#008800',
+                moveSpeed: 190,
+                jumpPower: -450,
+                description: 'Ranged bow fighter',
+                hasSprite: true
+            },
+            {
+                id: 'stickman',
+                name: 'Stickman',
+                color: '#FFD700',
+                moveSpeed: 240,
+                jumpPower: -430,
+                description: 'Lightning-fast puncher',
+                hasSprite: true
+            },
+            {
                 id: 'green-tank',
                 name: 'Green Tank',
                 color: '#00FF00',
@@ -86,47 +116,49 @@ class CharacterSelectScene extends Phaser.Scene {
             player2: null
         };
         
-        // Title
-        this.add.text(width/2, height*0.15, 'Character Selection', {
-            fontSize: '32px',
-            color: '#ffffff'
-        }).setOrigin(0.5);
-        
-        // Create character display
-        this.createCharacterDisplay();
-        
-        // Create selection UI
-        this.createSelectionUI();
-        
-        // Instructions
-        this.add.text(width/2, height*0.85, 'Player 1: A/D to navigate, E to select | Player 2: J/L to navigate, O to select', {
-            fontSize: '16px',
-            color: '#888888',
-            align: 'center'
-        }).setOrigin(0.5);
-        
         // Current selections
-        this.currentSelections = {
+        this.currentSelection = {
             player1: 0,
-            player2: 1
+            player2: 0
         };
         
-        // Setup controls
-        this.setupControls();
+        // Create UI elements
+        this.createTitle();
+        this.createCharacterDisplay();
+        this.createInstructions();
+        this.createPlayerLabels();
+        this.createStartButton();
         
-        // Update display
-        this.updateDisplay();
+        // Set up input handling
+        this.setupInputHandling();
+        
+        // Update initial display
+        this.updateCharacterHighlight();
+        this.updatePlayerInfo();
+        
+        // Save mode for later use
+        this.mode = this.registry.get('mode') || 'local';
+        Logger.log('Character select mode:', this.mode);
+    }
+    
+    createTitle() {
+        const { width, height } = this.scale;
+        this.add.text(width/2, height * 0.1, 'Choose Your Fighter', {
+            fontSize: '32px',
+            color: '#ffffff',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
     }
     
     createCharacterDisplay() {
         const { width, height } = this.scale;
         
-        // Character display area
+        // Character display area - updated for 6 characters
         this.characterDisplays = [];
-        const startX = width * 0.2;
-        const spacing = width * 0.15;
+        const startX = width * 0.08; // Start even further left to accommodate 6 characters
+        const spacing = width * 0.14; // Reduce spacing to fit 6 characters
         
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < 6; i++) { // Updated to 6 characters
             const character = this.characterTypes[i];
             const x = startX + (i * spacing);
             const y = height * 0.4;
@@ -159,6 +191,26 @@ class CharacterSelectScene extends Phaser.Scene {
                 preview = this.add.sprite(x, y, 'blue-witch-preview', 0); // Use frame 0 only
                 preview.setScale(2.5); // Scale up for better visibility
                 preview.setTint(0xCCAAFF); // Light purple tint to match character color
+                
+                // Add border rectangle behind the sprite
+                border = this.add.rectangle(x, y, 60, 80, 0x000000);
+                border.setStrokeStyle(2, 0x000000);
+                border.setAlpha(0); // Make fill transparent, only show border
+                border.setDepth(preview.depth - 1); // Put border behind sprite
+            } else if (character.hasSprite && character.id === 'archer') {
+                preview = this.add.sprite(x, y, 'archer-preview', 0); // Use frame 0 only
+                preview.setScale(1.5); // Reduced scale to match game scaling
+                preview.setTint(0xAAFFAA); // Light green tint to match character color
+                
+                // Add border rectangle behind the sprite
+                border = this.add.rectangle(x, y, 60, 80, 0x000000);
+                border.setStrokeStyle(2, 0x000000);
+                border.setAlpha(0); // Make fill transparent, only show border
+                border.setDepth(preview.depth - 1); // Put border behind sprite
+            } else if (character.hasSprite && character.id === 'stickman') {
+                preview = this.add.sprite(x, y, 'stickman-preview', 0); // Use frame 0 only
+                preview.setScale(3); // Scale up for better visibility
+                preview.setTint(0xFFFFAA); // Light yellow tint to match character color
                 
                 // Add border rectangle behind the sprite
                 border = this.add.rectangle(x, y, 60, 80, 0x000000);
@@ -241,6 +293,67 @@ class CharacterSelectScene extends Phaser.Scene {
         });
     }
     
+    createHoverIndicators() {
+        const { width, height } = this.scale;
+        
+        // Player 1 hover indicator (left side)
+        this.player1HoverIndicator = this.add.text(width * 0.25, height * 0.25, '', {
+            fontSize: '20px',
+            color: '#FF0000',
+            fontStyle: 'bold',
+            align: 'center'
+        }).setOrigin(0.5);
+        
+        // Player 1 description
+        this.player1HoverDescription = this.add.text(width * 0.25, height * 0.28, '', {
+            fontSize: '14px',
+            color: '#FFAAAA',
+            align: 'center'
+        }).setOrigin(0.5);
+        
+        // Player 1 stats
+        this.player1HoverStats = this.add.text(width * 0.25, height * 0.31, '', {
+            fontSize: '12px',
+            color: '#CCCCCC',
+            align: 'center'
+        }).setOrigin(0.5);
+        
+        // Player 2 hover indicator (right side)
+        this.player2HoverIndicator = this.add.text(width * 0.75, height * 0.25, '', {
+            fontSize: '20px',
+            color: '#0000FF',
+            fontStyle: 'bold',
+            align: 'center'
+        }).setOrigin(0.5);
+        
+        // Player 2 description
+        this.player2HoverDescription = this.add.text(width * 0.75, height * 0.28, '', {
+            fontSize: '14px',
+            color: '#AAAAFF',
+            align: 'center'
+        }).setOrigin(0.5);
+        
+        // Player 2 stats
+        this.player2HoverStats = this.add.text(width * 0.75, height * 0.31, '', {
+            fontSize: '12px',
+            color: '#CCCCCC',
+            align: 'center'
+        }).setOrigin(0.5);
+        
+        // Add labels above the indicators
+        this.add.text(width * 0.25, height * 0.22, 'Player 1 Hovering:', {
+            fontSize: '14px',
+            color: '#FFFFFF',
+            align: 'center'
+        }).setOrigin(0.5);
+        
+        this.add.text(width * 0.75, height * 0.22, 'Player 2 Hovering:', {
+            fontSize: '14px',
+            color: '#FFFFFF',
+            align: 'center'
+        }).setOrigin(0.5);
+    }
+    
     setupControls() {
         // Player 1 controls
         this.player1Keys = {
@@ -268,7 +381,7 @@ class CharacterSelectScene extends Phaser.Scene {
     
     moveSelection(player, direction) {
         const currentIndex = this.currentSelections[player];
-        const newIndex = Phaser.Math.Clamp(currentIndex + direction, 0, 3);
+        const newIndex = Phaser.Math.Clamp(currentIndex + direction, 0, 4); // Updated to 4 (0-4 for 5 characters)
         this.currentSelections[player] = newIndex;
         this.updateDisplay();
     }
@@ -356,6 +469,34 @@ class CharacterSelectScene extends Phaser.Scene {
             this.player2Status.setText(`Selected: ${this.selectedCharacters.player2.name}`);
         } else {
             this.player2Status.setText('Press O to select');
+        }
+        
+        // Update hover indicators
+        const player1HoveringCharacter = this.characterTypes[this.currentSelections.player1];
+        const player2HoveringCharacter = this.characterTypes[this.currentSelections.player2];
+        
+        if (this.player1HoverIndicator) {
+            this.player1HoverIndicator.setText(player1HoveringCharacter.name);
+        }
+        
+        if (this.player1HoverDescription) {
+            this.player1HoverDescription.setText(player1HoveringCharacter.description);
+        }
+        
+        if (this.player1HoverStats) {
+            this.player1HoverStats.setText(`Speed: ${player1HoveringCharacter.moveSpeed} | Jump: ${Math.abs(player1HoveringCharacter.jumpPower)}`);
+        }
+        
+        if (this.player2HoverIndicator) {
+            this.player2HoverIndicator.setText(player2HoveringCharacter.name);
+        }
+        
+        if (this.player2HoverDescription) {
+            this.player2HoverDescription.setText(player2HoveringCharacter.description);
+        }
+        
+        if (this.player2HoverStats) {
+            this.player2HoverStats.setText(`Speed: ${player2HoveringCharacter.moveSpeed} | Jump: ${Math.abs(player2HoveringCharacter.jumpPower)}`);
         }
     }
     

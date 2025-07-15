@@ -106,6 +106,24 @@ class GameScene extends Phaser.Scene {
             frameWidth: 32,
             frameHeight: 16  // 32x146 = 9 frames of 32x16
         });
+        
+        // Load Finn the Human sprite sheet
+        Logger.log('GameScene preload - Loading Finn the Human sprites');
+        this.load.spritesheet('finn-idle', 'assets/characters/Finn the Human/FinnSprite.png', {
+            frameWidth: 32,
+            frameHeight: 32  // Estimated frame size, will need adjustment based on actual sprite
+        });
+        
+        // For Finn, we'll use different frames from the same sprite sheet for different attacks
+        this.load.spritesheet('finn-attack-white', 'assets/characters/Finn the Human/FinnSprite.png', {
+            frameWidth: 32,
+            frameHeight: 32  // White sword attack frames
+        });
+        
+        this.load.spritesheet('finn-attack-golden', 'assets/characters/Finn the Human/FinnSprite.png', {
+            frameWidth: 32,
+            frameHeight: 32  // Golden sword attack frames
+        });
     }
 
     create() {
@@ -257,49 +275,118 @@ class GameScene extends Phaser.Scene {
         });
         
         Logger.log('Meow Knight animations created');
+        
+        // Create Finn the Human animations
+        Logger.log('Creating Finn the Human animations');
+        
+        // Finn idle animation (assuming frames 0-2 are idle)
+        this.anims.create({
+            key: 'finn-idle',
+            frames: this.anims.generateFrameNumbers('finn-idle', { 
+                start: 0, 
+                end: 2
+            }),
+            frameRate: 6,
+            repeat: -1
+        });
+        
+        // Finn white sword attack (regular attack) - assuming frames 3-5
+        this.anims.create({
+            key: 'finn-attack-white',
+            frames: this.anims.generateFrameNumbers('finn-attack-white', { 
+                start: 3, 
+                end: 5
+            }),
+            frameRate: 10,
+            repeat: 0
+        });
+        
+        // Finn golden sword attack (special attack) - assuming frames 6-8
+        this.anims.create({
+            key: 'finn-attack-golden',
+            frames: this.anims.generateFrameNumbers('finn-attack-golden', { 
+                start: 6, 
+                end: 8
+            }),
+            frameRate: 10,
+            repeat: 0
+        });
+        
+        Logger.log('Finn the Human animations created');
     }
     
     // Update sprite animations based on character state
     updateSpriteAnimations(player, playerData) {
         const sprite = player.body;
-        let targetAnimation = 'meow-knight-idle';
+        let targetAnimation = null;
         
-        // Priority order: Death > Attack > Dodge > Block > Jump > Run > Idle
-        if (playerData.eliminated) {
-            targetAnimation = 'meow-knight-death';
-        } else if (playerData.isAttacking) {
-            // Choose attack animation based on attack type or direction
-            if (playerData.attackType === 'special') {
-                targetAnimation = 'meow-knight-attack-4'; // Use attack-4 for special attacks
-            } else {
-                // Map directional attacks to different animations
-                switch (playerData.attackDirection) {
-                    case 'up':
-                        targetAnimation = 'meow-knight-attack-1';
-                        break;
-                    case 'down':
-                        targetAnimation = 'meow-knight-attack-2';
-                        break;
-                    case 'left':
-                    case 'right':
-                        targetAnimation = 'meow-knight-attack-3';
-                        break;
-                    default: // forward attack
-                        targetAnimation = 'meow-knight-attack-1';
-                        break;
-                }
-            }
-        } else if (playerData.isDodging) {
-            targetAnimation = 'meow-knight-dodge';
-        } else if (playerData.isBlocking) {
-            targetAnimation = 'STOP_ANIMATION'; // Stop animation when blocking
-        } else if (!playerData.isGrounded) {
-            targetAnimation = 'STOP_ANIMATION'; // Stop animation when jumping
-        } else if (Math.abs(playerData.velocityX) > 50) {
-            // Character is moving fast enough to run
-            targetAnimation = 'meow-knight-run';
-        } else {
+        // Different animation logic for different characters
+        if (playerData.characterId === 'red-fighter') {
+            // Meow Knight animations
             targetAnimation = 'meow-knight-idle';
+            
+            // Priority order: Death > Attack > Dodge > Block > Jump > Run > Idle
+            if (playerData.eliminated) {
+                targetAnimation = 'meow-knight-death';
+            } else if (playerData.isAttacking) {
+                // Choose attack animation based on attack type or direction
+                if (playerData.attackType === 'special') {
+                    targetAnimation = 'meow-knight-attack-4'; // Use attack-4 for special attacks
+                } else {
+                    // Map directional attacks to different animations
+                    switch (playerData.attackDirection) {
+                        case 'up':
+                            targetAnimation = 'meow-knight-attack-1';
+                            break;
+                        case 'down':
+                            targetAnimation = 'meow-knight-attack-2';
+                            break;
+                        case 'left':
+                        case 'right':
+                            targetAnimation = 'meow-knight-attack-3';
+                            break;
+                        default: // forward attack
+                            targetAnimation = 'meow-knight-attack-1';
+                            break;
+                    }
+                }
+            } else if (playerData.isDodging) {
+                targetAnimation = 'meow-knight-dodge';
+            } else if (playerData.isBlocking) {
+                targetAnimation = 'STOP_ANIMATION'; // Stop animation when blocking
+            } else if (!playerData.isGrounded) {
+                targetAnimation = 'STOP_ANIMATION'; // Stop animation when jumping
+            } else if (Math.abs(playerData.velocityX) > 50) {
+                // Character is moving fast enough to run
+                targetAnimation = 'meow-knight-run';
+            } else {
+                targetAnimation = 'meow-knight-idle';
+            }
+        } else if (playerData.characterId === 'finn-human') {
+            // Finn the Human animations
+            targetAnimation = 'finn-idle';
+            
+            // Priority order: Death > Attack > Block > Jump > Run > Idle
+            if (playerData.eliminated) {
+                targetAnimation = 'finn-idle'; // No death animation yet, use idle
+            } else if (playerData.isAttacking) {
+                if (playerData.attackType === 'special') {
+                    targetAnimation = 'finn-attack-golden'; // Golden sword for special attacks
+                } else {
+                    targetAnimation = 'finn-attack-white'; // White sword for regular attacks
+                }
+            } else if (playerData.isBlocking) {
+                targetAnimation = 'STOP_ANIMATION'; // Stop animation when blocking
+            } else if (!playerData.isGrounded) {
+                targetAnimation = 'STOP_ANIMATION'; // Stop animation when jumping
+            } else if (Math.abs(playerData.velocityX) > 50) {
+                targetAnimation = 'finn-idle'; // No run animation yet, use idle
+            } else {
+                targetAnimation = 'finn-idle';
+            }
+        } else {
+            // Default fallback
+            return;
         }
         
         // Handle animation playing logic
@@ -333,7 +420,11 @@ class GameScene extends Phaser.Scene {
             // Player took damage, flash red briefly
             sprite.setTint(0xFF0000);
             this.time.delayedCall(200, () => {
-                sprite.setTint(0xFFAAAA); // Return to normal red tint
+                if (playerData.characterId === 'red-fighter') {
+                    sprite.setTint(0xFFAAAA); // Return to normal red tint
+                } else if (playerData.characterId === 'finn-human') {
+                    sprite.setTint(0xAADDFF); // Return to normal blue tint
+                }
             });
         }
         
@@ -1785,6 +1876,38 @@ class GameScene extends Phaser.Scene {
             });
             
             Logger.log('Created Meow Knight sprite for red-fighter');
+        } else if (playerData.characterId === 'finn-human') {
+            // Create player body using Finn sprite
+            body = this.add.sprite(playerData.x, playerData.y, 'finn-idle');
+            body.setScale(3); // Scale up the 32x32 sprite to be more visible
+            body.play('finn-idle'); // Start with idle animation
+            
+            // Set tint to maintain color identification (subtle blue tint)
+            body.setTint(0xAADDFF); // Light blue tint
+            
+            // Add event listener for when attack animations complete
+            body.on('animationcomplete', (animation, frame) => {
+                if (animation.key.includes('attack')) {
+                    // Attack animation completed, clear the attack state
+                    const playerCooldown = this.attackCooldowns[playerId];
+                    const playerData = this.localPlayers[playerId];
+                    
+                    if (playerCooldown) {
+                        playerCooldown.isInAttack = false;
+                    }
+                    
+                    if (playerData && !playerData.eliminated) {
+                        playerData.isAttacking = false;
+                        playerData.attackType = null;
+                        playerData.attackDirection = null;
+                        this.updatePlayer(playerId, playerData);
+                    }
+                    
+                    Logger.log(`${playerId} attack animation completed - can attack again`);
+                }
+            });
+            
+            Logger.log('Created Finn the Human sprite for finn-human');
         } else {
             // Create player body (colored rectangle) for other characters
             body = this.add.rectangle(playerData.x, playerData.y, playerData.width, playerData.height, playerData.color);
@@ -1794,7 +1917,7 @@ class GameScene extends Phaser.Scene {
         // Create eyes for placeholder characters (but not sprites)
         let leftEye = null;
         let rightEye = null;
-        if (playerData.characterId !== 'red-fighter') {
+        if (playerData.characterId !== 'red-fighter' && playerData.characterId !== 'finn-human') {
             leftEye = this.add.circle(
                 playerData.x - 8,
                 playerData.y - 10,
@@ -1857,7 +1980,7 @@ class GameScene extends Phaser.Scene {
             attackIndicator: attackIndicator,
             originalColor: playerData.color, // Store original color
             data: playerData,
-            isSprite: playerData.characterId === 'red-fighter' // Flag to track if this is a sprite
+            isSprite: playerData.characterId === 'red-fighter' || playerData.characterId === 'finn-human' // Flag to track if this is a sprite
         };
         
         Logger.log('Player created successfully');
@@ -1906,7 +2029,7 @@ class GameScene extends Phaser.Scene {
         // Handle sprite positioning adjustments for different animation frame sizes
         if (player.isSprite && playerData.isAttacking && playerData.attackType === 'special') {
             // Special attack animation - move the character 3 paces in the attack direction
-            const scaleMultiplier = 4;
+            const scaleMultiplier = playerData.characterId === 'red-fighter' ? 4 : 3; // Different scale for different characters
             const pacesOffset = 3 * 16; // 3 paces, each pace is 16 pixels
             
             let offsetX = 0;
@@ -1974,63 +2097,59 @@ class GameScene extends Phaser.Scene {
             
             // Account for sprite position offset during special attacks
             if (player.isSprite && playerData.attackType === 'special') {
-                const scaleMultiplier = 4;
+                const scaleMultiplier = playerData.characterId === 'red-fighter' ? 4 : 3; // Different scale for different characters
                 const pacesOffset = 3 * 16; // 3 paces, each pace is 16 pixels
                 
-                // Move indicator in the same direction as the character
+                // Calculate the same position where the sprite is actually displayed
+                let spriteX = playerData.x;
+                let spriteY = playerData.y;
+                
                 switch (direction) {
                     case 'up':
-                        indicatorY = playerData.y - (pacesOffset * scaleMultiplier);
+                        spriteY = playerData.y - (pacesOffset * scaleMultiplier);
                         break;
                     case 'down':
-                        indicatorY = playerData.y + (pacesOffset * scaleMultiplier);
+                        spriteY = playerData.y + (pacesOffset * scaleMultiplier);
                         break;
                     case 'left':
-                        indicatorX = playerData.x - (pacesOffset * scaleMultiplier);
+                        spriteX = playerData.x - (pacesOffset * scaleMultiplier);
                         break;
                     case 'right':
-                        indicatorX = playerData.x + (pacesOffset * scaleMultiplier);
+                        spriteX = playerData.x + (pacesOffset * scaleMultiplier);
                         break;
                     default: // forward
-                        indicatorX = playerData.x + (playerData.facingRight ? (pacesOffset * scaleMultiplier) : -(pacesOffset * scaleMultiplier));
+                        spriteX = playerData.x + (playerData.facingRight ? (pacesOffset * scaleMultiplier) : -(pacesOffset * scaleMultiplier));
                         break;
                 }
+                
+                // Place indicator exactly at the sprite's visual position
+                player.attackIndicator.setPosition(spriteX, spriteY);
+            } else {
+                // For regular attacks, add the directional offset
+                switch (direction) {
+                    case 'up':
+                        indicatorY = indicatorY - 50;
+                        break;
+                    case 'down':
+                        indicatorY = indicatorY + 50;
+                        break;
+                    case 'left':
+                        indicatorX = indicatorX - 50;
+                        break;
+                    case 'right':
+                        indicatorX = indicatorX + 50;
+                        break;
+                    default: // forward
+                        indicatorX = indicatorX + (playerData.facingRight ? 50 : -50);
+                        break;
+                }
+                
+                player.attackIndicator.setPosition(indicatorX, indicatorY);
             }
-            
-            // Position attack indicator based on direction (additional offset from character position)
-            switch (direction) {
-                case 'up':
-                    indicatorY = indicatorY - 50;
-                    break;
-                case 'down':
-                    indicatorY = indicatorY + 50;
-                    break;
-                case 'left':
-                    indicatorX = indicatorX - 50;
-                    break;
-                case 'right':
-                    indicatorX = indicatorX + 50;
-                    break;
-                default: // forward
-                    indicatorX = indicatorX + (playerData.facingRight ? 50 : -50);
-                    break;
-            }
-            
-            player.attackIndicator.setPosition(indicatorX, indicatorY);
         } else {
             // Default position for non-attacking state
             let defaultX = playerData.x;
             let defaultY = playerData.y;
-            
-            // Account for sprite position offset for default position too
-            if (player.isSprite && playerData.attackType === 'special') {
-                const scaleMultiplier = 4;
-                const pacesOffset = 3 * 16; // 3 paces, each pace is 16 pixels
-                
-                // This shouldn't happen since attackType is cleared when not attacking,
-                // but keeping for consistency
-                defaultX = playerData.x + (playerData.facingRight ? (pacesOffset * scaleMultiplier) : -(pacesOffset * scaleMultiplier));
-            }
             
             player.attackIndicator.setPosition(
                 defaultX + (playerData.facingRight ? 50 : -50),

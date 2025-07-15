@@ -17,6 +17,12 @@ class CharacterSelectScene extends Phaser.Scene {
             frameWidth: 16,
             frameHeight: 16  // 16x146 = 9 frames of 16x16
         });
+        
+        // Load Finn sprite sheet for preview
+        this.load.spritesheet('finn-preview', 'assets/characters/Finn the Human/FinnSprite.png', {
+            frameWidth: 32,
+            frameHeight: 32  // Estimated frame size for Finn
+        });
     }
 
     create() {
@@ -40,6 +46,15 @@ class CharacterSelectScene extends Phaser.Scene {
                 hasSprite: true // Flag to indicate this character has a sprite
             },
             {
+                id: 'finn-human',
+                name: 'Finn the Human',
+                color: '#00AAFF',
+                moveSpeed: 220,
+                jumpPower: -480,
+                description: 'Hero with magical swords',
+                hasSprite: true
+            },
+            {
                 id: 'blue-speedster',
                 name: 'Blue Speedster',
                 color: '#0000FF',
@@ -55,15 +70,6 @@ class CharacterSelectScene extends Phaser.Scene {
                 moveSpeed: 150,
                 jumpPower: -400,
                 description: 'Slow but strong',
-                hasSprite: false
-            },
-            {
-                id: 'yellow-jumper',
-                name: 'Yellow Jumper',
-                color: '#FFFF00',
-                moveSpeed: 180,
-                jumpPower: -600,
-                description: 'High jumper',
                 hasSprite: false
             }
         ];
@@ -133,9 +139,19 @@ class CharacterSelectScene extends Phaser.Scene {
                 border.setStrokeStyle(2, 0x000000);
                 border.setAlpha(0); // Make fill transparent, only show border
                 border.setDepth(preview.depth - 1); // Put border behind sprite
+            } else if (character.hasSprite && character.id === 'finn-human') {
+                preview = this.add.sprite(x, y, 'finn-preview', 0); // Use frame 0 only
+                preview.setScale(2); // Scale up for better visibility
+                preview.setTint(0xAADDFF); // Light blue tint to match character color
+                
+                // Add border rectangle behind the sprite
+                border = this.add.rectangle(x, y, 60, 80, 0x000000);
+                border.setStrokeStyle(2, 0x000000);
+                border.setAlpha(0); // Make fill transparent, only show border
+                border.setDepth(preview.depth - 1); // Put border behind sprite
             } else {
                 preview = this.add.rectangle(x, y, 60, 80, character.color);
-            preview.setStrokeStyle(2, 0x000000);
+                preview.setStrokeStyle(2, 0x000000);
             }
             
             // Character name
@@ -258,8 +274,8 @@ class CharacterSelectScene extends Phaser.Scene {
             const display = this.characterDisplays[i];
             
             // Handle sprites vs rectangles differently
-            if (display.character.hasSprite && display.character.id === 'red-fighter' && display.border) {
-                // For sprites, update the border rectangle
+            if (display.character.hasSprite && display.border) {
+                // For sprites (both red-fighter and finn-human), update the border rectangle
                 display.border.setStrokeStyle(2, 0x000000);
                 
                 // Player 1 selection highlight
@@ -286,29 +302,29 @@ class CharacterSelectScene extends Phaser.Scene {
                 }
             } else {
                 // For rectangles, update the preview directly
-            display.preview.setStrokeStyle(2, 0x000000);
-            
-            // Player 1 selection highlight
-            if (this.currentSelections.player1 === i) {
-                display.preview.setStrokeStyle(4, 0xFF0000);
-            }
-            
-            // Player 2 selection highlight
-            if (this.currentSelections.player2 === i) {
-                display.preview.setStrokeStyle(4, 0x0000FF);
-            }
-            
-            // Both players selected same character
-            if (this.currentSelections.player1 === i && this.currentSelections.player2 === i) {
-                display.preview.setStrokeStyle(4, 0xFF00FF);
-            }
-            
-            // Selected character confirmation
-            if (this.selectedCharacters.player1 && this.selectedCharacters.player1.id === display.character.id) {
-                display.preview.setStrokeStyle(6, 0xFF0000);
-            }
-            if (this.selectedCharacters.player2 && this.selectedCharacters.player2.id === display.character.id) {
-                display.preview.setStrokeStyle(6, 0x0000FF);
+                display.preview.setStrokeStyle(2, 0x000000);
+                
+                // Player 1 selection highlight
+                if (this.currentSelections.player1 === i) {
+                    display.preview.setStrokeStyle(4, 0xFF0000);
+                }
+                
+                // Player 2 selection highlight
+                if (this.currentSelections.player2 === i) {
+                    display.preview.setStrokeStyle(4, 0x0000FF);
+                }
+                
+                // Both players selected same character
+                if (this.currentSelections.player1 === i && this.currentSelections.player2 === i) {
+                    display.preview.setStrokeStyle(4, 0xFF00FF);
+                }
+                
+                // Selected character confirmation
+                if (this.selectedCharacters.player1 && this.selectedCharacters.player1.id === display.character.id) {
+                    display.preview.setStrokeStyle(6, 0xFF0000);
+                }
+                if (this.selectedCharacters.player2 && this.selectedCharacters.player2.id === display.character.id) {
+                    display.preview.setStrokeStyle(6, 0x0000FF);
                 }
             }
         }

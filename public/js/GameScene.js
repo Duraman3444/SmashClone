@@ -1903,7 +1903,42 @@ class GameScene extends Phaser.Scene {
         }
         
         // Update position
-        player.body.setPosition(playerData.x, playerData.y);
+        // Handle sprite positioning adjustments for different animation frame sizes
+        if (player.isSprite && playerData.isAttacking && playerData.attackType === 'special') {
+            // Special attack animation - move the character 3 paces in the attack direction
+            const scaleMultiplier = 4;
+            const pacesOffset = 3 * 16; // 3 paces, each pace is 16 pixels
+            
+            let offsetX = 0;
+            let offsetY = 0;
+            
+            // Move character in the direction of the attack
+            switch (playerData.attackDirection) {
+                case 'up':
+                    offsetY = -pacesOffset;
+                    break;
+                case 'down':
+                    offsetY = pacesOffset;
+                    break;
+                case 'left':
+                    offsetX = -pacesOffset;
+                    break;
+                case 'right':
+                    offsetX = pacesOffset;
+                    break;
+                default: // forward
+                    offsetX = playerData.facingRight ? pacesOffset : -pacesOffset;
+                    break;
+            }
+            
+            player.body.setPosition(
+                playerData.x + (offsetX * scaleMultiplier), 
+                playerData.y + (offsetY * scaleMultiplier)
+            );
+        } else {
+            // For all other cases (sprites with other animations and rectangles), use normal position
+            player.body.setPosition(playerData.x, playerData.y);
+        }
         
         // Update eye positions for placeholder characters
         if (player.leftEye && player.rightEye) {
@@ -1937,36 +1972,69 @@ class GameScene extends Phaser.Scene {
             let indicatorX = playerData.x;
             let indicatorY = playerData.y;
             
-            // Position attack indicator based on direction
+            // Account for sprite position offset during special attacks
+            if (player.isSprite && playerData.attackType === 'special') {
+                const scaleMultiplier = 4;
+                const pacesOffset = 3 * 16; // 3 paces, each pace is 16 pixels
+                
+                // Move indicator in the same direction as the character
+                switch (direction) {
+                    case 'up':
+                        indicatorY = playerData.y - (pacesOffset * scaleMultiplier);
+                        break;
+                    case 'down':
+                        indicatorY = playerData.y + (pacesOffset * scaleMultiplier);
+                        break;
+                    case 'left':
+                        indicatorX = playerData.x - (pacesOffset * scaleMultiplier);
+                        break;
+                    case 'right':
+                        indicatorX = playerData.x + (pacesOffset * scaleMultiplier);
+                        break;
+                    default: // forward
+                        indicatorX = playerData.x + (playerData.facingRight ? (pacesOffset * scaleMultiplier) : -(pacesOffset * scaleMultiplier));
+                        break;
+                }
+            }
+            
+            // Position attack indicator based on direction (additional offset from character position)
             switch (direction) {
                 case 'up':
-                    indicatorX = playerData.x;
-                    indicatorY = playerData.y - 50;
+                    indicatorY = indicatorY - 50;
                     break;
                 case 'down':
-                    indicatorX = playerData.x;
-                    indicatorY = playerData.y + 50;
+                    indicatorY = indicatorY + 50;
                     break;
                 case 'left':
-                    indicatorX = playerData.x - 50;
-                    indicatorY = playerData.y;
+                    indicatorX = indicatorX - 50;
                     break;
                 case 'right':
-                    indicatorX = playerData.x + 50;
-                    indicatorY = playerData.y;
+                    indicatorX = indicatorX + 50;
                     break;
                 default: // forward
-                    indicatorX = playerData.x + (playerData.facingRight ? 50 : -50);
-                    indicatorY = playerData.y;
+                    indicatorX = indicatorX + (playerData.facingRight ? 50 : -50);
                     break;
             }
             
             player.attackIndicator.setPosition(indicatorX, indicatorY);
         } else {
             // Default position for non-attacking state
+            let defaultX = playerData.x;
+            let defaultY = playerData.y;
+            
+            // Account for sprite position offset for default position too
+            if (player.isSprite && playerData.attackType === 'special') {
+                const scaleMultiplier = 4;
+                const pacesOffset = 3 * 16; // 3 paces, each pace is 16 pixels
+                
+                // This shouldn't happen since attackType is cleared when not attacking,
+                // but keeping for consistency
+                defaultX = playerData.x + (playerData.facingRight ? (pacesOffset * scaleMultiplier) : -(pacesOffset * scaleMultiplier));
+            }
+            
             player.attackIndicator.setPosition(
-                playerData.x + (playerData.facingRight ? 50 : -50),
-                playerData.y
+                defaultX + (playerData.facingRight ? 50 : -50),
+                defaultY
             );
         }
         

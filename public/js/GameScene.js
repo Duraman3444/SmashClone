@@ -268,27 +268,7 @@ class GameScene extends Phaser.Scene {
         if (playerData.eliminated) {
             targetAnimation = 'meow-knight-death';
         } else if (playerData.isAttacking) {
-            // Choose attack animation based on attack type or direction
-            if (playerData.attackType === 'special') {
-                targetAnimation = 'meow-knight-attack-4'; // Use attack-4 for special attacks
-            } else {
-                // Map directional attacks to different animations
-                switch (playerData.attackDirection) {
-                    case 'up':
-                        targetAnimation = 'meow-knight-attack-1';
-                        break;
-                    case 'down':
-                        targetAnimation = 'meow-knight-attack-2';
-                        break;
-                    case 'left':
-                    case 'right':
-                        targetAnimation = 'meow-knight-attack-3';
-                        break;
-                    default: // forward attack
-                        targetAnimation = 'meow-knight-attack-1';
-                        break;
-                }
-            }
+            targetAnimation = 'STOP_ANIMATION'; // Stop animation when attacking
         } else if (playerData.isDodging) {
             targetAnimation = 'meow-knight-dodge';
         } else if (playerData.isBlocking) {

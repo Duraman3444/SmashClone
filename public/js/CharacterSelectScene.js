@@ -135,7 +135,7 @@ class CharacterSelectScene extends Phaser.Scene {
                 border.setDepth(preview.depth - 1); // Put border behind sprite
             } else {
                 preview = this.add.rectangle(x, y, 60, 80, character.color);
-                preview.setStrokeStyle(2, 0x000000);
+            preview.setStrokeStyle(2, 0x000000);
             }
             
             // Character name
@@ -286,29 +286,29 @@ class CharacterSelectScene extends Phaser.Scene {
                 }
             } else {
                 // For rectangles, update the preview directly
-                display.preview.setStrokeStyle(2, 0x000000);
-                
-                // Player 1 selection highlight
-                if (this.currentSelections.player1 === i) {
-                    display.preview.setStrokeStyle(4, 0xFF0000);
-                }
-                
-                // Player 2 selection highlight
-                if (this.currentSelections.player2 === i) {
-                    display.preview.setStrokeStyle(4, 0x0000FF);
-                }
-                
-                // Both players selected same character
-                if (this.currentSelections.player1 === i && this.currentSelections.player2 === i) {
-                    display.preview.setStrokeStyle(4, 0xFF00FF);
-                }
-                
-                // Selected character confirmation
-                if (this.selectedCharacters.player1 && this.selectedCharacters.player1.id === display.character.id) {
-                    display.preview.setStrokeStyle(6, 0xFF0000);
-                }
-                if (this.selectedCharacters.player2 && this.selectedCharacters.player2.id === display.character.id) {
-                    display.preview.setStrokeStyle(6, 0x0000FF);
+            display.preview.setStrokeStyle(2, 0x000000);
+            
+            // Player 1 selection highlight
+            if (this.currentSelections.player1 === i) {
+                display.preview.setStrokeStyle(4, 0xFF0000);
+            }
+            
+            // Player 2 selection highlight
+            if (this.currentSelections.player2 === i) {
+                display.preview.setStrokeStyle(4, 0x0000FF);
+            }
+            
+            // Both players selected same character
+            if (this.currentSelections.player1 === i && this.currentSelections.player2 === i) {
+                display.preview.setStrokeStyle(4, 0xFF00FF);
+            }
+            
+            // Selected character confirmation
+            if (this.selectedCharacters.player1 && this.selectedCharacters.player1.id === display.character.id) {
+                display.preview.setStrokeStyle(6, 0xFF0000);
+            }
+            if (this.selectedCharacters.player2 && this.selectedCharacters.player2.id === display.character.id) {
+                display.preview.setStrokeStyle(6, 0x0000FF);
                 }
             }
         }

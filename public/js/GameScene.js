@@ -167,7 +167,7 @@ class GameScene extends Phaser.Scene {
                 start: 0, 
                 end: 13
             }),
-            frameRate: 10,
+            frameRate: 8, // Reduced from 10 to 8 for more natural movement
             repeat: 0
         });
         
@@ -189,7 +189,7 @@ class GameScene extends Phaser.Scene {
                 start: 0, 
                 end: 8
             }),
-            frameRate: 8,  // Reduced from 15 to 8 for more natural hitting
+            frameRate: 10, // Reduced from 15 to 10 for more natural attacks
             repeat: 0
         });
         
@@ -199,7 +199,7 @@ class GameScene extends Phaser.Scene {
                 start: 0, 
                 end: 3
             }),
-            frameRate: 6,  // Reduced from 12 to 6 for more natural hitting
+            frameRate: 8, // Reduced from 12 to 8 for more natural attacks
             repeat: 0
         });
         
@@ -209,7 +209,7 @@ class GameScene extends Phaser.Scene {
                 start: 0, 
                 end: 3
             }),
-            frameRate: 6,  // Reduced from 12 to 6 for more natural hitting
+            frameRate: 8, // Reduced from 12 to 8 for more natural attacks
             repeat: 0
         });
         
@@ -219,7 +219,7 @@ class GameScene extends Phaser.Scene {
                 start: 0, 
                 end: 9
             }),
-            frameRate: 8,  // Reduced from 15 to 8 for more natural hitting
+            frameRate: 10, // Reduced from 15 to 10 for more natural special attacks
             repeat: 0
         });
         
@@ -268,7 +268,27 @@ class GameScene extends Phaser.Scene {
         if (playerData.eliminated) {
             targetAnimation = 'meow-knight-death';
         } else if (playerData.isAttacking) {
-            targetAnimation = 'STOP_ANIMATION'; // Stop animation when attacking
+            // Choose attack animation based on attack type or direction
+            if (playerData.attackType === 'special') {
+                targetAnimation = 'meow-knight-attack-4'; // Use attack-4 for special attacks
+            } else {
+                // Map directional attacks to different animations
+                switch (playerData.attackDirection) {
+                    case 'up':
+                        targetAnimation = 'meow-knight-attack-1';
+                        break;
+                    case 'down':
+                        targetAnimation = 'meow-knight-attack-2';
+                        break;
+                    case 'left':
+                    case 'right':
+                        targetAnimation = 'meow-knight-attack-3';
+                        break;
+                    default: // forward attack
+                        targetAnimation = 'meow-knight-attack-1';
+                        break;
+                }
+            }
         } else if (playerData.isDodging) {
             targetAnimation = 'meow-knight-dodge';
         } else if (playerData.isBlocking) {

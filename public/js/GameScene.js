@@ -157,7 +157,7 @@ class GameScene extends Phaser.Scene {
                 end: 8
             }),
             frameRate: 8,
-            repeat: -1
+            repeat: 0
         });
         
         // Run animation (16x230 = 14 frames)
@@ -168,7 +168,7 @@ class GameScene extends Phaser.Scene {
                 end: 13
             }),
             frameRate: 10,
-            repeat: -1
+            repeat: 0
         });
         
         // Jump animation (16x366 = 22 frames)
@@ -300,29 +300,11 @@ class GameScene extends Phaser.Scene {
             targetAnimation = 'meow-knight-idle';
         }
         
-        // Special handling for single-play animations (don't restart if already playing)
-        const singlePlayAnimations = [
-            'meow-knight-jump',
-            'meow-knight-attack-1',
-            'meow-knight-attack-2', 
-            'meow-knight-attack-3',
-            'meow-knight-attack-4',
-            'meow-knight-dodge',
-            'meow-knight-damage',
-            'meow-knight-death'
-        ];
-        
-        if (singlePlayAnimations.includes(targetAnimation)) {
-            // Only play single-play animation if not already playing or if it's completed
-            if (sprite.anims.currentAnim?.key !== targetAnimation || 
-                !sprite.anims.isPlaying) {
-                sprite.play(targetAnimation);
-            }
-        } else {
-            // For looping animations (idle, run), change if different from current
-            if (sprite.anims.currentAnim?.key !== targetAnimation) {
-                sprite.play(targetAnimation);
-            }
+        // All animations are now single-play and stick to final frame
+        // Only play new animation if it's different from current or if current animation completed
+        if (sprite.anims.currentAnim?.key !== targetAnimation || 
+            !sprite.anims.isPlaying) {
+            sprite.play(targetAnimation);
         }
         
         // Handle damage flash effect

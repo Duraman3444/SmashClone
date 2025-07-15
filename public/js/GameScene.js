@@ -648,14 +648,12 @@ class GameScene extends Phaser.Scene {
         playerCooldown.isInAttack = true;
         
         // Attack properties based on type
-        let damage, knockback, range, duration;
+        let knockback, range, duration;
         if (attackType === 'special') {
-            damage = 25;           // Special attacks do more damage
             knockback = 400;       // Stronger knockback
             range = 100;           // Longer range
             duration = 500;        // Longer duration
         } else {
-            damage = 15;           // Regular attack damage
             knockback = 200;       // Regular knockback
             range = 80;            // Regular range
             duration = 300;        // Regular duration
@@ -663,8 +661,8 @@ class GameScene extends Phaser.Scene {
         
         Logger.log(`${playerId} ${attackType} attack ${direction}`);
         
-        // Check for hits on other players
-        this.checkPlayerHits(playerId, damage, knockback, range, direction);
+        // Check for hits on other players (damage calculated per target)
+        this.checkPlayerHits(playerId, attackType, knockback, range, direction);
         
         // Update visual
         this.updatePlayer(playerId, playerData);
@@ -767,7 +765,7 @@ class GameScene extends Phaser.Scene {
     }
     
     // Check for hits between players
-    checkPlayerHits(attackerId, damage, knockback, range, direction) {
+    checkPlayerHits(attackerId, attackType, knockback, range, direction) {
         const attacker = this.localPlayers[attackerId];
         if (!attacker) return;
         
@@ -820,6 +818,17 @@ class GameScene extends Phaser.Scene {
             
             // Check if hit connects
             if (distance < range && yDistance < 80) {
+                // Calculate damage based on attack type and target's health percentage
+                let damage;
+                if (attackType === 'special') {
+                    // Special attacks: 15 base damage + scaling based on target's health percentage
+                    const healthScaling = target.health * 0.2; // 20% of target's health as bonus damage
+                    damage = 15 + healthScaling;
+                } else {
+                    // Regular attacks: 5 damage
+                    damage = 5;
+                }
+                
                 // Check if target is blocking
                 if (target.isBlocking && target.shieldHealth > 0) {
                     // Attack hits shield
@@ -841,7 +850,7 @@ class GameScene extends Phaser.Scene {
                     
                 } else {
                     // Normal hit
-                    Logger.log(`${attackerId} hit ${playerId} with ${attacker.attackType} ${direction} attack for ${damage} damage`);
+                    Logger.log(`${attackerId} hit ${playerId} with ${attackType} ${direction} attack for ${damage} damage`);
                     this.applyHit(target, attacker, damage, knockback, direction);
                 }
             }

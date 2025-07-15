@@ -538,8 +538,8 @@ class GameScene extends Phaser.Scene {
             
             if (!playerData || !statusDisplay) return;
             
-            // Update damage percentage
-            statusDisplay.damageText.setText(`${playerData.health}%`);
+            // Update damage percentage (round to remove decimal points)
+            statusDisplay.damageText.setText(`${Math.round(playerData.health)}%`);
             
             // Color code damage based on percentage
             let damageColor = '#FFFFFF';
@@ -954,7 +954,7 @@ class GameScene extends Phaser.Scene {
     
     // Show hit effect
     showHitEffect(x, y, damage) {
-        const hitText = this.add.text(x, y - 20, `${damage}%`, {
+        const hitText = this.add.text(x, y - 20, `${Math.round(damage)}%`, {
             fontSize: '16px',
             fill: '#FF0000',
             fontStyle: 'bold'
@@ -1479,8 +1479,8 @@ class GameScene extends Phaser.Scene {
                 fontStyle: 'bold'
             }).setOrigin(0.5);
             
-            // Add damage percentage
-            const damageText = this.add.text(baseX - 40, baseY - 15, `${playerData.health}%`, {
+            // Add damage percentage (round to remove decimal points)
+            const damageText = this.add.text(baseX - 40, baseY - 15, `${Math.round(playerData.health)}%`, {
                 fontSize: '24px',
                 fill: '#FFFFFF',
                 fontStyle: 'bold'
@@ -1797,7 +1797,7 @@ class GameScene extends Phaser.Scene {
             playerInfo.innerHTML = `
                 <div style="font-size: 14px; margin-bottom: 5px;">${playerName}</div>
                 <div class="player-health" style="color: ${this.getHealthColor(playerData.health)}">
-                    ${playerData.health}%
+                    ${Math.round(playerData.health)}%
                 </div>
                 <div class="player-lives">Lives: ${playerData.lives}</div>
             `;

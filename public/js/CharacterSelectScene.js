@@ -14,8 +14,8 @@ class CharacterSelectScene extends Phaser.Scene {
         
         // Load Meow Knight idle sprite for character select preview
         this.load.spritesheet('meow-knight-idle-preview', 'assets/characters/Meow Knight/Meow-Knight_Idle.png', {
-            frameWidth: 32,
-            frameHeight: 32
+            frameWidth: 16,
+            frameHeight: 16
         });
     }
 
@@ -135,7 +135,7 @@ class CharacterSelectScene extends Phaser.Scene {
             // Create character preview (sprite for red-fighter, rectangle for others)
             if (character.hasSprite) {
                 preview = this.add.sprite(x, y, 'meow-knight-idle-preview');
-                preview.setScale(2.5); // Scale up for better visibility
+                preview.setScale(4); // Scale up for better visibility
                 preview.play('meow-knight-idle-preview');
                 preview.setTint(0xFFAAAA); // Light red tint to match character color
             } else {

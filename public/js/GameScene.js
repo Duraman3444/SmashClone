@@ -55,58 +55,56 @@ class GameScene extends Phaser.Scene {
         Logger.log('GameScene preload - Loading Meow Knight sprites');
         
         // Load Meow Knight sprite sheets (vertical sprite sheets)
-        // Based on dimensions: 32x288 = 9 frames of 32x32 each
+        // Based on actual dimensions from file analysis
         this.load.spritesheet('meow-knight-idle', 'assets/characters/Meow Knight/Meow-Knight_Idle.png', {
-            frameWidth: 32,
-            frameHeight: 32
+            frameWidth: 16,
+            frameHeight: 16  // 16x146 = 9 frames of 16x16
         });
         
-        // 32x384 = 12 frames of 32x32 each
         this.load.spritesheet('meow-knight-run', 'assets/characters/Meow Knight/Meow-Knight_Run.png', {
-            frameWidth: 32,
-            frameHeight: 32
+            frameWidth: 16,
+            frameHeight: 16  // 16x230 = 14 frames of 16x16
         });
         
-        // 32x128 = 4 frames of 32x32 each
         this.load.spritesheet('meow-knight-jump', 'assets/characters/Meow Knight/Meow-Knight_Jump.png', {
-            frameWidth: 32,
-            frameHeight: 32
+            frameWidth: 16,
+            frameHeight: 16  // 16x366 = 23 frames of 16x16
         });
         
-        // Attack sprite sheets - checking dimensions from earlier analysis
+        // Attack sprite sheets - using actual dimensions
         this.load.spritesheet('meow-knight-attack-1', 'assets/characters/Meow Knight/Meow-Knight_Attack_1.png', {
             frameWidth: 32,
-            frameHeight: 32
+            frameHeight: 32  // 32x314 = ~10 frames of 32x32
         });
         
         this.load.spritesheet('meow-knight-attack-2', 'assets/characters/Meow Knight/Meow-Knight_Attack_2.png', {
             frameWidth: 48,
-            frameHeight: 32
+            frameHeight: 32  // 48x142 = ~4 frames of 48x32
         });
         
         this.load.spritesheet('meow-knight-attack-3', 'assets/characters/Meow Knight/Meow-Knight_Attack_3.png', {
             frameWidth: 32,
-            frameHeight: 32
+            frameHeight: 32  // 32x142 = ~4 frames of 32x32
         });
         
         this.load.spritesheet('meow-knight-attack-4', 'assets/characters/Meow Knight/Meow-Knight_Attack_4.png', {
             frameWidth: 80,
-            frameHeight: 32
+            frameHeight: 32  // 80x326 = ~10 frames of 80x32
         });
         
         this.load.spritesheet('meow-knight-dodge', 'assets/characters/Meow Knight/Meow-Knight_Dodge.png', {
             frameWidth: 32,
-            frameHeight: 32
+            frameHeight: 32  // 32x198 = ~6 frames of 32x32
         });
         
         this.load.spritesheet('meow-knight-damage', 'assets/characters/Meow Knight/Meow-Knight_Take_Damage.png', {
-            frameWidth: 32,
-            frameHeight: 32
+            frameWidth: 16,
+            frameHeight: 16  // 16x68 = 4 frames of 16x16
         });
         
         this.load.spritesheet('meow-knight-death', 'assets/characters/Meow Knight/Meow-Knight_Death.png', {
             frameWidth: 32,
-            frameHeight: 32
+            frameHeight: 16  // 32x146 = 9 frames of 32x16
         });
     }
 
@@ -151,7 +149,7 @@ class GameScene extends Phaser.Scene {
         // Create animations for different states
         // Note: These are vertical sprite sheets, so we need to calculate frame configurations
         
-        // Idle animation (32x288 = 9 frames)
+        // Idle animation (16x146 = 9 frames)
         this.anims.create({
             key: 'meow-knight-idle',
             frames: this.anims.generateFrameNumbers('meow-knight-idle', { 
@@ -162,23 +160,23 @@ class GameScene extends Phaser.Scene {
             repeat: -1
         });
         
-        // Run animation (32x384 = 12 frames)
+        // Run animation (16x230 = 14 frames)
         this.anims.create({
             key: 'meow-knight-run',
             frames: this.anims.generateFrameNumbers('meow-knight-run', { 
                 start: 0, 
-                end: 11
+                end: 13
             }),
             frameRate: 10,
             repeat: -1
         });
         
-        // Jump animation (32x128 = 4 frames)
+        // Jump animation (16x366 = 22 frames)
         this.anims.create({
             key: 'meow-knight-jump',
             frames: this.anims.generateFrameNumbers('meow-knight-jump', { 
                 start: 0, 
-                end: 3
+                end: 21
             }),
             frameRate: 8,
             repeat: 0
@@ -189,7 +187,7 @@ class GameScene extends Phaser.Scene {
             key: 'meow-knight-attack-1',
             frames: this.anims.generateFrameNumbers('meow-knight-attack-1', { 
                 start: 0, 
-                end: 9
+                end: 8
             }),
             frameRate: 15,
             repeat: 0
@@ -225,18 +223,18 @@ class GameScene extends Phaser.Scene {
             repeat: 0
         });
         
-        // Dodge/Block animation (32x240 = 7 frames)
+        // Dodge/Block animation (32x198 = 6 frames)
         this.anims.create({
             key: 'meow-knight-dodge',
             frames: this.anims.generateFrameNumbers('meow-knight-dodge', { 
                 start: 0, 
-                end: 6
+                end: 5
             }),
             frameRate: 8,
             repeat: 0
         });
         
-        // Damage animation (32x144 = 4 frames)
+        // Damage animation (16x68 = 4 frames)
         this.anims.create({
             key: 'meow-knight-damage',
             frames: this.anims.generateFrameNumbers('meow-knight-damage', { 
@@ -247,12 +245,12 @@ class GameScene extends Phaser.Scene {
             repeat: 0
         });
         
-        // Death animation (32x480 = 15 frames)
+        // Death animation (32x146 = 9 frames)
         this.anims.create({
             key: 'meow-knight-death',
             frames: this.anims.generateFrameNumbers('meow-knight-death', { 
                 start: 0, 
-                end: 14
+                end: 8
             }),
             frameRate: 6,
             repeat: 0
@@ -1562,7 +1560,7 @@ class GameScene extends Phaser.Scene {
         if (playerData.characterId === 'red-fighter') {
             // Create player body using Meow Knight sprite
             body = this.add.sprite(playerData.x, playerData.y, 'meow-knight-idle');
-            body.setScale(2); // Scale up the 32x32 sprite to be more visible
+            body.setScale(4); // Scale up the 16x16 sprite to be more visible
             body.play('meow-knight-idle'); // Start with idle animation
             
             // Set tint to maintain color identification (subtle red tint)

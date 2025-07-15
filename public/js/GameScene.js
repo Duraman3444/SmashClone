@@ -712,6 +712,23 @@ class GameScene extends Phaser.Scene {
         playerData.attackDirection = direction;
         playerCooldown.isInAttack = true;
         
+        // Update facing direction based on attack direction to make animations look natural
+        if (direction === 'left') {
+            playerData.facingRight = false;
+        } else if (direction === 'right') {
+            playerData.facingRight = true;
+        } else if (direction === 'forward') {
+            // For forward attacks, find the nearest opponent and face them
+            const opponents = Object.keys(this.localPlayers).filter(id => id !== playerId);
+            if (opponents.length > 0) {
+                const opponent = this.localPlayers[opponents[0]];
+                if (opponent) {
+                    playerData.facingRight = opponent.x > playerData.x;
+                }
+            }
+        }
+        // Up and down attacks don't change facing direction
+        
         // Attack properties based on type
         let knockback, range, duration;
         if (attackType === 'special') {

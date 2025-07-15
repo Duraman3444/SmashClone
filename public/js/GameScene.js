@@ -800,13 +800,14 @@ class GameScene extends Phaser.Scene {
             sprite.anims.stop();
             sprite.setFrame(0); // Set to first frame of idle animation
         } else if (currentAnimKey !== targetAnimation) {
-            // Different animation requested, play it
+            // Different animation requested, stop current and play new one
+            sprite.anims.stop();
             sprite.play(targetAnimation);
         } else if (targetAnimation.includes('attack') && isCurrentlyPlaying) {
             // Attack animation is already playing, don't restart it
             // Let it finish and stick to final frame
-        } else if (targetAnimation === 'meow-knight-jump' && !isCurrentlyPlaying) {
-            // Jump animation should loop, restart if not playing
+        } else if ((targetAnimation === 'meow-knight-jump' || targetAnimation === 'stickman-jump' || targetAnimation === 'stickman-run' || targetAnimation === 'stickman-idle') && !isCurrentlyPlaying) {
+            // Jump, run, and idle animations should loop, restart if not playing
             sprite.play(targetAnimation);
         } else if (!isCurrentlyPlaying && !targetAnimation.includes('attack')) {
             // Non-attack animation completed, restart it

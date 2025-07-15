@@ -208,22 +208,9 @@ class GameScene extends Phaser.Scene {
         Logger.log('Local 2-player setup complete with physics');
     }
     
-    handlePlayerAttack(playerId) {
-        const playerData = this.localPlayers[playerId];
-        if (!playerData) return;
-        
-        playerData.isAttacking = true;
-        this.updatePlayer(playerId, playerData);
-        
-        setTimeout(() => {
-            playerData.isAttacking = false;
-            this.updatePlayer(playerId, playerData);
-        }, 300);
-    }
-    
     handlePlayerJump(playerId) {
         const playerData = this.localPlayers[playerId];
-        if (!playerData) return;
+        if (!playerData || playerData.eliminated) return;
         
         // Only jump if grounded and can jump
         if (playerData.isGrounded && playerData.canJump) {
@@ -232,6 +219,21 @@ class GameScene extends Phaser.Scene {
             playerData.canJump = false;
             Logger.log(`Player ${playerId} jumped with velocity`, playerData.velocityY);
         }
+    }
+    
+    handlePlayerAttack(playerId) {
+        const playerData = this.localPlayers[playerId];
+        if (!playerData || playerData.eliminated) return;
+        
+        playerData.isAttacking = true;
+        this.updatePlayer(playerId, playerData);
+        
+        setTimeout(() => {
+            if (playerData && !playerData.eliminated) {
+                playerData.isAttacking = false;
+                this.updatePlayer(playerId, playerData);
+            }
+        }, 300);
     }
     
     // Check collision between player and platform
@@ -268,6 +270,9 @@ class GameScene extends Phaser.Scene {
     applyPhysics(playerId, deltaTime) {
         const player = this.localPlayers[playerId];
         if (!player) return;
+        
+        // Skip physics for eliminated players
+        if (player.eliminated) return;
         
         // Apply gravity
         if (!player.isGrounded) {
@@ -315,10 +320,52 @@ class GameScene extends Phaser.Scene {
             player.velocityX = 0;
         }
         
+        // Warning when player is near the bottom (about to fall off)
+        if (player.y > 550 && player.y < 650) {
+            this.showFallWarning(playerId);
+        }
+        
         // Respawn if player falls off stage
         if (player.y > 650) {
             Logger.log(`Player ${playerId} fell off stage, respawning`);
             this.respawnPlayer(playerId);
+        }
+    }
+    
+    // Show fall warning
+    showFallWarning(playerId) {
+        const player = this.players[playerId];
+        if (!player || !player.fallWarning) {
+            // Create warning indicator if it doesn't exist
+            if (player && !player.fallWarning) {
+                player.fallWarning = this.add.text(
+                    this.localPlayers[playerId].x, 
+                    this.localPlayers[playerId].y - 60, 
+                    '⚠️ DANGER!', 
+                    {
+                        fontSize: '16px',
+                        fill: '#FF0000',
+                        fontStyle: 'bold'
+                    }
+                ).setOrigin(0.5);
+            }
+        }
+        
+        // Update warning position
+        if (player && player.fallWarning) {
+            player.fallWarning.setPosition(
+                this.localPlayers[playerId].x, 
+                this.localPlayers[playerId].y - 60
+            );
+            player.fallWarning.setVisible(true);
+        }
+    }
+    
+    // Hide fall warning
+    hideFallWarning(playerId) {
+        const player = this.players[playerId];
+        if (player && player.fallWarning) {
+            player.fallWarning.setVisible(false);
         }
     }
     
@@ -327,8 +374,11 @@ class GameScene extends Phaser.Scene {
         const player = this.localPlayers[playerId];
         if (!player) return;
         
+        // Decrement lives
         player.lives--;
         player.health = 0;
+        
+        // Reset position and physics
         player.x = playerId === 'player1' ? 300 : 500;
         player.y = 200;
         player.velocityX = 0;
@@ -336,12 +386,96 @@ class GameScene extends Phaser.Scene {
         player.isGrounded = false;
         player.canJump = true;
         
-        Logger.log(`Player ${playerId} respawned. Lives remaining: ${player.lives}`);
+        Logger.log(`Player ${playerId} fell off stage! Lives remaining: ${player.lives}`);
         
+        // Show respawn message
+        this.showRespawnMessage(playerId, player.lives);
+        
+        // Check for elimination
         if (player.lives <= 0) {
-            Logger.log(`Player ${playerId} eliminated!`);
-            // Could add game over logic here
+            Logger.log(`Player ${playerId} eliminated! Game Over!`);
+            this.handlePlayerElimination(playerId);
         }
+        
+        // Update UI immediately
+        this.updateUI();
+    }
+    
+    // Show respawn message
+    showRespawnMessage(playerId, livesRemaining) {
+        const playerName = playerId === 'player1' ? 'Player 1' : 'Player 2';
+        const message = livesRemaining > 0 ? 
+            `${playerName} fell off! ${livesRemaining} lives remaining` : 
+            `${playerName} eliminated!`;
+        
+        const messageText = this.add.text(400, 150, message, {
+            fontSize: '24px',
+            fill: '#FFFFFF',
+            backgroundColor: '#000000',
+            padding: { x: 10, y: 5 }
+        }).setOrigin(0.5);
+        
+        // Flash the message
+        this.tweens.add({
+            targets: messageText,
+            alpha: 0,
+            duration: 2000,
+            ease: 'Power2',
+            onComplete: () => {
+                messageText.destroy();
+            }
+        });
+    }
+    
+    // Handle player elimination
+    handlePlayerElimination(playerId) {
+        const player = this.localPlayers[playerId];
+        if (!player) return;
+        
+        // Mark player as eliminated
+        player.eliminated = true;
+        
+        // Check if only one player remains
+        const alivePlayers = Object.values(this.localPlayers).filter(p => !p.eliminated);
+        
+        if (alivePlayers.length <= 1) {
+            // Game over
+            const winner = alivePlayers[0];
+            const winnerName = winner ? (winner.id === 'player1' ? 'Player 1' : 'Player 2') : 'No one';
+            
+            Logger.log(`Game Over! Winner: ${winnerName}`);
+            this.showGameOverMessage(winnerName, winner);
+        }
+    }
+    
+    // Show game over message
+    showGameOverMessage(winnerName, winner) {
+        // Create game over overlay
+        const overlay = this.add.rectangle(400, 300, 800, 600, 0x000000, 0.7);
+        
+        // Winner message
+        const winnerMessage = this.add.text(400, 250, `🎉 ${winnerName} Wins! 🎉`, {
+            fontSize: '48px',
+            fill: winner ? winner.color : '#FFFFFF',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+        
+        // Restart instruction
+        const restartText = this.add.text(400, 350, 'Refresh the page to play again', {
+            fontSize: '24px',
+            fill: '#CCCCCC'
+        }).setOrigin(0.5);
+        
+        // Animate the winner message
+        this.tweens.add({
+            targets: winnerMessage,
+            scaleX: 1.2,
+            scaleY: 1.2,
+            duration: 500,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Power2'
+        });
     }
     
     isKeyDown(keyArray) {
@@ -474,6 +608,16 @@ class GameScene extends Phaser.Scene {
         const player = this.players[playerId];
         if (!player) return;
         
+        // Handle eliminated players
+        if (playerData.eliminated) {
+            player.body.setAlpha(0.3); // Make eliminated player semi-transparent
+            player.body.setTint(0x888888); // Gray out eliminated player
+            player.healthText.setText('ELIMINATED');
+            player.healthText.setStyle({ fill: '#FF0000' });
+            player.livesText.setText('Lives: 0');
+            return; // Don't update position/other properties for eliminated players
+        }
+        
         // Update position
         player.body.setPosition(playerData.x, playerData.y);
         
@@ -486,10 +630,20 @@ class GameScene extends Phaser.Scene {
         // Update health display
         player.healthText.setPosition(playerData.x, playerData.y - 40);
         player.healthText.setText(`${playerData.health}%`);
+        player.healthText.setStyle({ fill: '#fff' }); // Reset color
         
-        // Update lives display
+        // Update lives display with emphasis
         player.livesText.setPosition(playerData.x, playerData.y + 35);
         player.livesText.setText(`Lives: ${playerData.lives}`);
+        
+        // Color code lives based on remaining count
+        if (playerData.lives <= 1) {
+            player.livesText.setStyle({ fill: '#FF0000' }); // Red for critical
+        } else if (playerData.lives <= 2) {
+            player.livesText.setStyle({ fill: '#FFFF00' }); // Yellow for warning
+        } else {
+            player.livesText.setStyle({ fill: '#00FF00' }); // Green for safe
+        }
         
         // Update attack indicator
         player.attackIndicator.setPosition(
@@ -504,13 +658,6 @@ class GameScene extends Phaser.Scene {
             player.attackIndicator.setAlpha(0);
         }
         
-        // Highlight current player
-        if (playerId === this.myPlayerId) {
-            player.body.setStrokeStyle(3, 0xFFFF00); // Yellow outline for current player
-        } else {
-            player.body.setStrokeStyle(2, 0x000000);
-        }
-        
         // Show grounded status with visual cue
         if (playerData.isGrounded) {
             player.body.setStrokeStyle(3, 0x00FF00); // Green outline when grounded
@@ -522,6 +669,10 @@ class GameScene extends Phaser.Scene {
         if (playerId === this.myPlayerId) {
             player.body.setStrokeStyle(3, 0xFFFF00); // Yellow outline for current player
         }
+        
+        // Reset transparency and tint for active players
+        player.body.setAlpha(1);
+        player.body.setTint(0xFFFFFF);
         
         // Update stored data
         player.data = playerData;
@@ -609,8 +760,8 @@ class GameScene extends Phaser.Scene {
             this.applyPhysics('player1', deltaTime);
             this.applyPhysics('player2', deltaTime);
 
-            // Handle Player 1 movement (WASD/Arrow keys)
-            if (player1) {
+            // Handle Player 1 movement (only if not eliminated)
+            if (player1 && !player1.eliminated) {
                 let moved = false;
                 
                 if (this.isKeyDown(this.player1Keys.left)) {
@@ -629,10 +780,15 @@ class GameScene extends Phaser.Scene {
                 if (moved) {
                     this.updatePlayer('player1', player1);
                 }
+                
+                // Hide fall warning if player is safe
+                if (player1.y <= 550) {
+                    this.hideFallWarning('player1');
+                }
             }
 
-            // Handle Player 2 movement (IJKL)
-            if (player2) {
+            // Handle Player 2 movement (only if not eliminated)
+            if (player2 && !player2.eliminated) {
                 let moved = false;
                 
                 if (this.isKeyDown(this.player2Keys.left)) {
@@ -650,6 +806,11 @@ class GameScene extends Phaser.Scene {
                 
                 if (moved) {
                     this.updatePlayer('player2', player2);
+                }
+                
+                // Hide fall warning if player is safe
+                if (player2.y <= 550) {
+                    this.hideFallWarning('player2');
                 }
             }
 

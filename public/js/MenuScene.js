@@ -28,7 +28,7 @@ class MenuScene extends Phaser.Scene {
         });
         
         // Add instruction text
-        this.add.text(width/2, height*0.75, 'Player 1: WASD + W/Up Arrow/Spacebar to jump + E to attack + R for special\nPlayer 2: IJKL + I/K to jump + O to attack + P for special', {
+        this.add.text(width/2, height*0.75, 'Player 1: WASD + W/Up Arrow/Spacebar to jump + E to attack + R for special\nPlayer 2: IJKL + I to jump + O to attack + P for special', {
             fontSize:'16px', 
             color:'#888888', 
             align:'center'

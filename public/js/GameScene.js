@@ -51,10 +51,70 @@ class GameScene extends Phaser.Scene {
         Logger.log('GameScene preload');
         // Remove problematic data URI loading
         // We'll create graphics programmatically instead
+        // Add preload method to load Meow Knight sprites
+        Logger.log('GameScene preload - Loading Meow Knight sprites');
+        
+        // Load Meow Knight sprite sheets (vertical sprite sheets)
+        // Based on dimensions: 32x288 = 9 frames of 32x32 each
+        this.load.spritesheet('meow-knight-idle', 'assets/characters/Meow Knight/Meow-Knight_Idle.png', {
+            frameWidth: 32,
+            frameHeight: 32
+        });
+        
+        // 32x384 = 12 frames of 32x32 each
+        this.load.spritesheet('meow-knight-run', 'assets/characters/Meow Knight/Meow-Knight_Run.png', {
+            frameWidth: 32,
+            frameHeight: 32
+        });
+        
+        // 32x128 = 4 frames of 32x32 each
+        this.load.spritesheet('meow-knight-jump', 'assets/characters/Meow Knight/Meow-Knight_Jump.png', {
+            frameWidth: 32,
+            frameHeight: 32
+        });
+        
+        // Attack sprite sheets - checking dimensions from earlier analysis
+        this.load.spritesheet('meow-knight-attack-1', 'assets/characters/Meow Knight/Meow-Knight_Attack_1.png', {
+            frameWidth: 32,
+            frameHeight: 32
+        });
+        
+        this.load.spritesheet('meow-knight-attack-2', 'assets/characters/Meow Knight/Meow-Knight_Attack_2.png', {
+            frameWidth: 48,
+            frameHeight: 32
+        });
+        
+        this.load.spritesheet('meow-knight-attack-3', 'assets/characters/Meow Knight/Meow-Knight_Attack_3.png', {
+            frameWidth: 32,
+            frameHeight: 32
+        });
+        
+        this.load.spritesheet('meow-knight-attack-4', 'assets/characters/Meow Knight/Meow-Knight_Attack_4.png', {
+            frameWidth: 80,
+            frameHeight: 32
+        });
+        
+        this.load.spritesheet('meow-knight-dodge', 'assets/characters/Meow Knight/Meow-Knight_Dodge.png', {
+            frameWidth: 32,
+            frameHeight: 32
+        });
+        
+        this.load.spritesheet('meow-knight-damage', 'assets/characters/Meow Knight/Meow-Knight_Take_Damage.png', {
+            frameWidth: 32,
+            frameHeight: 32
+        });
+        
+        this.load.spritesheet('meow-knight-death', 'assets/characters/Meow Knight/Meow-Knight_Death.png', {
+            frameWidth: 32,
+            frameHeight: 32
+        });
     }
 
     create() {
         Logger.log('GameScene create');
+        
+        // Create sprite animations after loading
+        this.createAnimations();
         
         // Set background color
         this.cameras.main.setBackgroundColor('#87CEEB');
@@ -82,6 +142,182 @@ class GameScene extends Phaser.Scene {
         
         // Update UI
         this.updateUI();
+    }
+    
+    // Create sprite animations from loaded images
+    createAnimations() {
+        Logger.log('Creating Meow Knight animations');
+        
+        // Create animations for different states
+        // Note: These are vertical sprite sheets, so we need to calculate frame configurations
+        
+        // Idle animation (32x288 = 9 frames)
+        this.anims.create({
+            key: 'meow-knight-idle',
+            frames: this.anims.generateFrameNumbers('meow-knight-idle', { 
+                start: 0, 
+                end: 8
+            }),
+            frameRate: 8,
+            repeat: -1
+        });
+        
+        // Run animation (32x384 = 12 frames)
+        this.anims.create({
+            key: 'meow-knight-run',
+            frames: this.anims.generateFrameNumbers('meow-knight-run', { 
+                start: 0, 
+                end: 11
+            }),
+            frameRate: 10,
+            repeat: -1
+        });
+        
+        // Jump animation (32x128 = 4 frames)
+        this.anims.create({
+            key: 'meow-knight-jump',
+            frames: this.anims.generateFrameNumbers('meow-knight-jump', { 
+                start: 0, 
+                end: 3
+            }),
+            frameRate: 8,
+            repeat: 0
+        });
+        
+        // Attack animations (based on actual sprite sheet dimensions)
+        this.anims.create({
+            key: 'meow-knight-attack-1',
+            frames: this.anims.generateFrameNumbers('meow-knight-attack-1', { 
+                start: 0, 
+                end: 9
+            }),
+            frameRate: 15,
+            repeat: 0
+        });
+        
+        this.anims.create({
+            key: 'meow-knight-attack-2',
+            frames: this.anims.generateFrameNumbers('meow-knight-attack-2', { 
+                start: 0, 
+                end: 3
+            }),
+            frameRate: 12,
+            repeat: 0
+        });
+        
+        this.anims.create({
+            key: 'meow-knight-attack-3',
+            frames: this.anims.generateFrameNumbers('meow-knight-attack-3', { 
+                start: 0, 
+                end: 3
+            }),
+            frameRate: 12,
+            repeat: 0
+        });
+        
+        this.anims.create({
+            key: 'meow-knight-attack-4',
+            frames: this.anims.generateFrameNumbers('meow-knight-attack-4', { 
+                start: 0, 
+                end: 9
+            }),
+            frameRate: 15,
+            repeat: 0
+        });
+        
+        // Dodge/Block animation (32x240 = 7 frames)
+        this.anims.create({
+            key: 'meow-knight-dodge',
+            frames: this.anims.generateFrameNumbers('meow-knight-dodge', { 
+                start: 0, 
+                end: 6
+            }),
+            frameRate: 8,
+            repeat: 0
+        });
+        
+        // Damage animation (32x144 = 4 frames)
+        this.anims.create({
+            key: 'meow-knight-damage',
+            frames: this.anims.generateFrameNumbers('meow-knight-damage', { 
+                start: 0, 
+                end: 3
+            }),
+            frameRate: 8,
+            repeat: 0
+        });
+        
+        // Death animation (32x480 = 15 frames)
+        this.anims.create({
+            key: 'meow-knight-death',
+            frames: this.anims.generateFrameNumbers('meow-knight-death', { 
+                start: 0, 
+                end: 14
+            }),
+            frameRate: 6,
+            repeat: 0
+        });
+        
+        Logger.log('Meow Knight animations created');
+    }
+    
+    // Update sprite animations based on character state
+    updateSpriteAnimations(player, playerData) {
+        const sprite = player.body;
+        let targetAnimation = 'meow-knight-idle';
+        
+        // Priority order: Death > Attack > Block > Jump > Run > Idle
+        if (playerData.eliminated) {
+            targetAnimation = 'meow-knight-death';
+        } else if (playerData.isAttacking) {
+            // Choose attack animation based on attack type or direction
+            if (playerData.attackType === 'special') {
+                targetAnimation = 'meow-knight-attack-4'; // Use attack-4 for special attacks
+            } else {
+                // Map directional attacks to different animations
+                switch (playerData.attackDirection) {
+                    case 'up':
+                        targetAnimation = 'meow-knight-attack-1';
+                        break;
+                    case 'down':
+                        targetAnimation = 'meow-knight-attack-2';
+                        break;
+                    case 'left':
+                    case 'right':
+                        targetAnimation = 'meow-knight-attack-3';
+                        break;
+                    default: // forward attack
+                        targetAnimation = 'meow-knight-attack-1';
+                        break;
+                }
+            }
+        } else if (playerData.isBlocking) {
+            targetAnimation = 'meow-knight-dodge';
+        } else if (!playerData.isGrounded) {
+            targetAnimation = 'meow-knight-jump';
+        } else if (Math.abs(playerData.velocityX) > 50) {
+            // Character is moving fast enough to run
+            targetAnimation = 'meow-knight-run';
+        } else {
+            targetAnimation = 'meow-knight-idle';
+        }
+        
+        // Only change animation if it's different from current
+        if (sprite.anims.currentAnim?.key !== targetAnimation) {
+            sprite.play(targetAnimation);
+        }
+        
+        // Handle damage flash effect
+        if (playerData.health > (playerData.previousHealth || 0)) {
+            // Player took damage, flash red briefly
+            sprite.setTint(0xFF0000);
+            this.time.delayedCall(200, () => {
+                sprite.setTint(0xFFAAAA); // Return to normal red tint
+            });
+        }
+        
+        // Store previous health for damage detection
+        playerData.previousHealth = playerData.health;
     }
 
     setupMultiplayer(){
@@ -1320,10 +1556,24 @@ class GameScene extends Phaser.Scene {
         Logger.log('Creating player', playerId, 'at', playerData.x, playerData.y);
         
         const player = this.add.group();
+        let body;
         
-        // Create player body (colored rectangle)
-        const body = this.add.rectangle(playerData.x, playerData.y, playerData.width, playerData.height, playerData.color);
-        body.setStrokeStyle(2, 0x000000);
+        // Check if this is the red-fighter character (should use Meow Knight sprites)
+        if (playerData.characterId === 'red-fighter') {
+            // Create player body using Meow Knight sprite
+            body = this.add.sprite(playerData.x, playerData.y, 'meow-knight-idle');
+            body.setScale(2); // Scale up the 32x32 sprite to be more visible
+            body.play('meow-knight-idle'); // Start with idle animation
+            
+            // Set tint to maintain color identification (subtle red tint)
+            body.setTint(0xFFAAAA); // Light red tint
+            
+            Logger.log('Created Meow Knight sprite for red-fighter');
+        } else {
+            // Create player body (colored rectangle) for other characters
+            body = this.add.rectangle(playerData.x, playerData.y, playerData.width, playerData.height, playerData.color);
+            body.setStrokeStyle(2, 0x000000);
+        }
         
         // Create player face direction indicator
         const face = this.add.circle(
@@ -1366,7 +1616,8 @@ class GameScene extends Phaser.Scene {
             blockIndicator: blockIndicator,
             attackIndicator: attackIndicator,
             originalColor: playerData.color, // Store original color
-            data: playerData
+            data: playerData,
+            isSprite: playerData.characterId === 'red-fighter' // Flag to track if this is a sprite
         };
         
         Logger.log('Player created successfully');
@@ -1379,14 +1630,37 @@ class GameScene extends Phaser.Scene {
         // Handle eliminated players
         if (playerData.eliminated) {
             player.body.setAlpha(0.3); // Make eliminated player semi-transparent
-            player.body.setFillStyle(0x888888); // Gray out eliminated player
+            
+            if (player.isSprite) {
+                // For sprites, play death animation
+                if (player.body.anims.currentAnim?.key !== 'meow-knight-death') {
+                    player.body.play('meow-knight-death');
+                }
+            } else {
+                // For rectangles, gray out
+                player.body.setFillStyle(0x888888);
+            }
             return; // Don't update position/other properties for eliminated players
         }
         
         // Reset appearance for active players
         player.body.setAlpha(1);
-        // Use stored original color
-        player.body.setFillStyle(player.originalColor);
+        
+        // Handle sprite vs rectangle differently
+        if (player.isSprite) {
+            // Update sprite animations based on state
+            this.updateSpriteAnimations(player, playerData);
+            
+            // Update sprite flip direction
+            if (playerData.facingRight) {
+                player.body.setFlipX(false);
+            } else {
+                player.body.setFlipX(true);
+            }
+        } else {
+            // Use stored original color for rectangles
+            player.body.setFillStyle(player.originalColor);
+        }
         
         // Update position
         player.body.setPosition(playerData.x, playerData.y);

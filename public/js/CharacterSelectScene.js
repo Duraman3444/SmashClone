@@ -8,10 +8,30 @@ class CharacterSelectScene extends Phaser.Scene {
         this.fromGameOver = data.fromGameOver || false;
     }
 
-    preload() {}
+    // Add preload method to load Meow Knight sprite for preview
+    preload() {
+        Logger.log('CharacterSelectScene preload - Loading Meow Knight for preview');
+        
+        // Load Meow Knight idle sprite for character select preview
+        this.load.spritesheet('meow-knight-idle-preview', 'assets/characters/Meow Knight/Meow-Knight_Idle.png', {
+            frameWidth: 32,
+            frameHeight: 32
+        });
+    }
 
     create() {
         Logger.log('CharacterSelectScene created');
+        
+        // Create Meow Knight animation for preview
+        this.anims.create({
+            key: 'meow-knight-idle-preview',
+            frames: this.anims.generateFrameNumbers('meow-knight-idle-preview', { 
+                start: 0, 
+                end: 8
+            }),
+            frameRate: 8,
+            repeat: -1
+        });
         
         // Hide status div
         const statusDiv = document.getElementById('status');
@@ -23,11 +43,12 @@ class CharacterSelectScene extends Phaser.Scene {
         this.characterTypes = [
             {
                 id: 'red-fighter',
-                name: 'Red Fighter',
+                name: 'Meow Knight',
                 color: '#FF0000',
                 moveSpeed: 200,
                 jumpPower: -500,
-                description: 'Balanced fighter'
+                description: 'Skilled swordsman',
+                hasSprite: true // Flag to indicate this character has a sprite
             },
             {
                 id: 'blue-speedster',
@@ -35,7 +56,8 @@ class CharacterSelectScene extends Phaser.Scene {
                 color: '#0000FF',
                 moveSpeed: 250,
                 jumpPower: -450,
-                description: 'Fast movement'
+                description: 'Fast movement',
+                hasSprite: false
             },
             {
                 id: 'green-tank',
@@ -43,7 +65,8 @@ class CharacterSelectScene extends Phaser.Scene {
                 color: '#00FF00',
                 moveSpeed: 150,
                 jumpPower: -400,
-                description: 'Slow but strong'
+                description: 'Slow but strong',
+                hasSprite: false
             },
             {
                 id: 'yellow-jumper',
@@ -51,7 +74,8 @@ class CharacterSelectScene extends Phaser.Scene {
                 color: '#FFFF00',
                 moveSpeed: 180,
                 jumpPower: -600,
-                description: 'High jumper'
+                description: 'High jumper',
+                hasSprite: false
             }
         ];
         
@@ -106,8 +130,18 @@ class CharacterSelectScene extends Phaser.Scene {
             const x = startX + (i * spacing);
             const y = height * 0.4;
             
-            // Character preview (colored rectangle)
-            const preview = this.add.rectangle(x, y, 60, 80, character.color);
+            let preview;
+            
+            // Create character preview (sprite for red-fighter, rectangle for others)
+            if (character.hasSprite) {
+                preview = this.add.sprite(x, y, 'meow-knight-idle-preview');
+                preview.setScale(2.5); // Scale up for better visibility
+                preview.play('meow-knight-idle-preview');
+                preview.setTint(0xFFAAAA); // Light red tint to match character color
+            } else {
+                preview = this.add.rectangle(x, y, 60, 80, character.color);
+            }
+            
             preview.setStrokeStyle(2, 0x000000);
             
             // Character name

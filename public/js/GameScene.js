@@ -2707,11 +2707,20 @@ class GameScene extends Phaser.Scene {
             // Update sprite animations based on state
             this.updateSpriteAnimations(player, playerData);
             
-            // Update sprite flip direction
-            if (playerData.facingRight) {
-                player.body.setFlipX(false);
-            } else {
-                player.body.setFlipX(true);
+            // Update sprite flip direction (only for actual sprites, not containers)
+            if (playerData.characterId !== 'pixel-bot' && player.body.setFlipX) {
+                if (playerData.facingRight) {
+                    player.body.setFlipX(false);
+                } else {
+                    player.body.setFlipX(true);
+                }
+            } else if (playerData.characterId === 'pixel-bot') {
+                // Handle Pixel Bot flipping by scaling the container
+                if (playerData.facingRight) {
+                    player.body.setScale(1, 1);
+                } else {
+                    player.body.setScale(-1, 1);
+                }
             }
         } else {
             // Use stored original color for rectangles

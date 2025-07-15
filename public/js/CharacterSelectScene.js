@@ -38,8 +38,8 @@ class CharacterSelectScene extends Phaser.Scene {
         
         // Load Stickman sprite sheet for preview
         this.load.spritesheet('stickman-preview', 'assets/characters/StickmanPack/Idle/Thin.png', {
-            frameWidth: 32,
-            frameHeight: 32  // Estimated frame size for Stickman
+            frameWidth: 64,
+            frameHeight: 64  // Correct frame size for Stickman - 384x64 = 6 frames of 64x64
         });
     }
 
@@ -107,6 +107,15 @@ class CharacterSelectScene extends Phaser.Scene {
                 jumpPower: -460,
                 description: 'AI-powered fighter',
                 hasSprite: true
+            },
+            {
+                id: 'green-tank',
+                name: 'Green Tank',
+                color: '#00FF00',
+                moveSpeed: 150,
+                jumpPower: -400,
+                description: 'Slow but strong',
+                hasSprite: false
             }
         ];
         
@@ -153,12 +162,12 @@ class CharacterSelectScene extends Phaser.Scene {
     createCharacterDisplay() {
         const { width, height } = this.scale;
         
-        // Character display area - updated for 6 characters
+        // Character display area - updated for 7 characters
         this.characterDisplays = [];
-        const startX = width * 0.08; // Start even further left to accommodate 6 characters
-        const spacing = width * 0.14; // Reduce spacing to fit 6 characters
+        const startX = width * 0.05; // Start even further left to accommodate 7 characters
+        const spacing = width * 0.128; // Reduce spacing to fit 7 characters
         
-        for (let i = 0; i < 6; i++) { // Updated to 6 characters
+        for (let i = 0; i < 7; i++) { // Updated to 7 characters
             const character = this.characterTypes[i];
             const x = startX + (i * spacing);
             const y = height * 0.4;
@@ -209,7 +218,7 @@ class CharacterSelectScene extends Phaser.Scene {
                 border.setDepth(preview.depth - 1); // Put border behind sprite
             } else if (character.hasSprite && character.id === 'stickman') {
                 preview = this.add.sprite(x, y, 'stickman-preview', 0); // Use frame 0 only
-                preview.setScale(3); // Scale up for better visibility
+                preview.setScale(1.5); // Scale up for better visibility (reduced due to larger frame size)
                 preview.setTint(0xFFFFAA); // Light yellow tint to match character color
                 
                 // Add border rectangle behind the sprite
@@ -429,7 +438,7 @@ class CharacterSelectScene extends Phaser.Scene {
 
     moveSelection(player, direction) {
         const currentIndex = this.currentSelections[player];
-        const newIndex = Phaser.Math.Clamp(currentIndex + direction, 0, 5); // Updated to 5 (0-5 for 6 characters)
+        const newIndex = Phaser.Math.Clamp(currentIndex + direction, 0, 6); // Updated to 6 (0-6 for 7 characters)
         this.currentSelections[player] = newIndex;
         this.updateDisplay();
     }

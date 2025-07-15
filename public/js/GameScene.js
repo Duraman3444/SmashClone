@@ -300,9 +300,18 @@ class GameScene extends Phaser.Scene {
             targetAnimation = 'meow-knight-idle';
         }
         
-        // Only change animation if it's different from current
-        if (sprite.anims.currentAnim?.key !== targetAnimation) {
-            sprite.play(targetAnimation);
+        // Special handling for jump animation - don't restart if already playing
+        if (targetAnimation === 'meow-knight-jump') {
+            // Only play jump animation if not already playing or if it's completed
+            if (sprite.anims.currentAnim?.key !== 'meow-knight-jump' || 
+                !sprite.anims.isPlaying) {
+                sprite.play('meow-knight-jump');
+            }
+        } else {
+            // Only change animation if it's different from current
+            if (sprite.anims.currentAnim?.key !== targetAnimation) {
+                sprite.play(targetAnimation);
+            }
         }
         
         // Handle damage flash effect

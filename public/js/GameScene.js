@@ -590,7 +590,7 @@ class GameScene extends Phaser.Scene {
         player.add(livesText);
         player.add(attackIndicator);
         
-        // Store references
+        // Store references and original color
         this.players[playerId] = {
             group: player,
             body: body,
@@ -598,6 +598,7 @@ class GameScene extends Phaser.Scene {
             healthText: healthText,
             livesText: livesText,
             attackIndicator: attackIndicator,
+            originalColor: playerData.color, // Store original color
             data: playerData
         };
         
@@ -611,12 +612,18 @@ class GameScene extends Phaser.Scene {
         // Handle eliminated players
         if (playerData.eliminated) {
             player.body.setAlpha(0.3); // Make eliminated player semi-transparent
-            player.body.setTint(0x888888); // Gray out eliminated player
+            player.body.setFillStyle(0x888888); // Gray out eliminated player
             player.healthText.setText('ELIMINATED');
             player.healthText.setStyle({ fill: '#FF0000' });
             player.livesText.setText('Lives: 0');
+            player.livesText.setStyle({ fill: '#FF0000' });
             return; // Don't update position/other properties for eliminated players
         }
+        
+        // Reset appearance for active players
+        player.body.setAlpha(1);
+        // Use stored original color
+        player.body.setFillStyle(player.originalColor);
         
         // Update position
         player.body.setPosition(playerData.x, playerData.y);
@@ -669,10 +676,6 @@ class GameScene extends Phaser.Scene {
         if (playerId === this.myPlayerId) {
             player.body.setStrokeStyle(3, 0xFFFF00); // Yellow outline for current player
         }
-        
-        // Reset transparency and tint for active players
-        player.body.setAlpha(1);
-        player.body.setTint(0xFFFFFF);
         
         // Update stored data
         player.data = playerData;

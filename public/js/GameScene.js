@@ -1047,14 +1047,24 @@ class GameScene extends Phaser.Scene {
             player.isGrounded = false;
         }
         
-        // Keep players within stage bounds
+        // Check for out-of-bounds and trigger respawn
+        // Left wall
         if (player.x < player.width / 2) {
-            player.x = player.width / 2;
-            player.velocityX = 0;
+            Logger.log(`Player ${playerId} hit left wall, respawning`);
+            this.respawnPlayer(playerId);
+            return;
         }
+        // Right wall
         if (player.x > 800 - player.width / 2) {
-            player.x = 800 - player.width / 2;
-            player.velocityX = 0;
+            Logger.log(`Player ${playerId} hit right wall, respawning`);
+            this.respawnPlayer(playerId);
+            return;
+        }
+        // Ceiling
+        if (player.y < player.height / 2) {
+            Logger.log(`Player ${playerId} hit ceiling, respawning`);
+            this.respawnPlayer(playerId);
+            return;
         }
         
         // Warning when player is near the bottom (about to fall off)
@@ -1062,7 +1072,7 @@ class GameScene extends Phaser.Scene {
             this.showFallWarning(playerId);
         }
         
-        // Respawn if player falls off stage
+        // Respawn if player falls off stage (bottom boundary)
         if (player.y > 650) {
             Logger.log(`Player ${playerId} fell off stage, respawning`);
             this.respawnPlayer(playerId);

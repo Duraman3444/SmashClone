@@ -1494,6 +1494,7 @@ class GameScene extends Phaser.Scene {
                     }
                     
                     player.blockIndicator.setAlpha(0);
+                    player.dodgeIndicator.setAlpha(0);
                     
                     // Hide fall warnings
                     if (player.fallWarning) {
@@ -1797,6 +1798,16 @@ class GameScene extends Phaser.Scene {
         blockIndicator.setAlpha(0);
         blockIndicator.setStrokeStyle(2, 0x00FFFF);
         
+        // Create dodge indicator
+        const dodgeIndicator = this.add.rectangle(
+            playerData.x,
+            playerData.y,
+            50, 90,
+            0xFF0000
+        );
+        dodgeIndicator.setAlpha(0);
+        dodgeIndicator.setStrokeStyle(2, 0xFF0000);
+        
         // Add attack indicator
         const attackIndicator = this.add.rectangle(
             playerData.x + (playerData.facingRight ? 50 : -50),
@@ -1811,6 +1822,7 @@ class GameScene extends Phaser.Scene {
         if (leftEye) player.add(leftEye);
         if (rightEye) player.add(rightEye);
         player.add(blockIndicator);
+        player.add(dodgeIndicator);
         player.add(attackIndicator);
         
         // Store references and original color
@@ -1820,6 +1832,7 @@ class GameScene extends Phaser.Scene {
             leftEye: leftEye,
             rightEye: rightEye,
             blockIndicator: blockIndicator,
+            dodgeIndicator: dodgeIndicator,
             attackIndicator: attackIndicator,
             originalColor: playerData.color, // Store original color
             data: playerData,
@@ -1885,6 +1898,16 @@ class GameScene extends Phaser.Scene {
             player.blockIndicator.setAlpha(0.5);
         } else {
             player.blockIndicator.setAlpha(0);
+        }
+        
+        // Update dodge indicator
+        player.dodgeIndicator.setPosition(playerData.x, playerData.y);
+        
+        // Show dodge indicator if dodging
+        if (playerData.isDodging) {
+            player.dodgeIndicator.setAlpha(0.5);
+        } else {
+            player.dodgeIndicator.setAlpha(0);
         }
         
         // Update attack indicator

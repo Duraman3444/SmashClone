@@ -202,28 +202,28 @@ class GameScene extends Phaser.Scene {
         // Load Stickman sprite sheets
         Logger.log('GameScene preload - Loading Stickman sprites');
         this.load.spritesheet('stickman-idle', 'assets/characters/StickmanPack/Idle/Thin.png', {
-            frameWidth: 32,
-            frameHeight: 32  // Stickman idle frames
+            frameWidth: 64,
+            frameHeight: 64  // Stickman idle frames - 384x64 = 6 frames of 64x64
         });
         
         this.load.spritesheet('stickman-run', 'assets/characters/StickmanPack/Run/Run.png', {
-            frameWidth: 32,
-            frameHeight: 32  // Stickman run frames
+            frameWidth: 64,
+            frameHeight: 64  // Stickman run frames - 576x64 = 9 frames of 64x64
         });
         
         this.load.spritesheet('stickman-jump', 'assets/characters/StickmanPack/Jump/Jump.png', {
-            frameWidth: 32,
-            frameHeight: 32  // Stickman jump frames
+            frameWidth: 64,
+            frameHeight: 64  // Stickman jump frames - 128x128 = 2 frames of 64x64
         });
         
         this.load.spritesheet('stickman-punch', 'assets/characters/StickmanPack/Punch/Punch.png', {
-            frameWidth: 32,
-            frameHeight: 32  // Stickman punch frames
+            frameWidth: 64,
+            frameHeight: 64  // Stickman punch frames - 256x192 = 4 frames of 64x64
         });
         
         this.load.spritesheet('stickman-death', 'assets/characters/StickmanPack/Death/Death.png', {
-            frameWidth: 32,
-            frameHeight: 32  // Stickman death frames
+            frameWidth: 64,
+            frameHeight: 64  // Stickman death frames - 192x192 = 3 frames of 64x64
         });
     }
 
@@ -582,59 +582,59 @@ class GameScene extends Phaser.Scene {
         // Create Stickman animations
         Logger.log('Creating Stickman animations');
         
-        // Stickman idle animation (single frame - static)
+        // Stickman idle animation (6 frames)
         this.anims.create({
             key: 'stickman-idle',
             frames: this.anims.generateFrameNumbers('stickman-idle', { 
                 start: 0, 
-                end: 0  // Single frame only
+                end: 5  // 6 frames total
             }),
-            frameRate: 1,
-            repeat: 0  // No repeat - completely static
+            frameRate: 6,
+            repeat: -1  // Loop continuously
         });
         
-        // Stickman run animation (single frame - static)
+        // Stickman run animation (9 frames)
         this.anims.create({
             key: 'stickman-run',
             frames: this.anims.generateFrameNumbers('stickman-run', { 
                 start: 0, 
-                end: 0  // Single frame only
+                end: 8  // 9 frames total
             }),
-            frameRate: 1,
-            repeat: 0  // No repeat - completely static
+            frameRate: 12,
+            repeat: -1  // Loop continuously
         });
         
-        // Stickman jump animation (single frame - static)
+        // Stickman jump animation (2 frames)
         this.anims.create({
             key: 'stickman-jump',
             frames: this.anims.generateFrameNumbers('stickman-jump', { 
                 start: 0, 
-                end: 0  // Single frame only
+                end: 1  // 2 frames total
             }),
-            frameRate: 1,
-            repeat: 0  // No repeat - completely static
+            frameRate: 8,
+            repeat: -1  // Loop continuously
         });
         
-        // Stickman punch animation (single frame - static)
+        // Stickman punch animation (4 frames)
         this.anims.create({
             key: 'stickman-punch',
             frames: this.anims.generateFrameNumbers('stickman-punch', { 
                 start: 0, 
-                end: 0  // Single frame only
+                end: 3  // 4 frames total
             }),
-            frameRate: 1,
-            repeat: 0  // No repeat - completely static
+            frameRate: 10,
+            repeat: 0  // Play once for attack
         });
         
-        // Stickman death animation (single frame - static)
+        // Stickman death animation (3 frames)
         this.anims.create({
             key: 'stickman-death',
             frames: this.anims.generateFrameNumbers('stickman-death', { 
                 start: 0, 
-                end: 0  // Single frame only
+                end: 2  // 3 frames total
             }),
-            frameRate: 1,
-            repeat: 0  // No repeat - completely static
+            frameRate: 6,
+            repeat: 0  // Play once for death
         });
         
         Logger.log('Stickman animations created');
@@ -774,7 +774,7 @@ class GameScene extends Phaser.Scene {
             } else if (playerData.isAttacking) {
                 targetAnimation = 'stickman-punch'; // Use punch animation for all attacks
             } else if (playerData.isBlocking) {
-                targetAnimation = 'STOP_ANIMATION'; // Stop animation when blocking
+                targetAnimation = 'stickman-idle'; // Use idle animation when blocking
             } else if (!playerData.isGrounded) {
                 targetAnimation = 'stickman-jump'; // Use jump animation when in air
             } else if (Math.abs(playerData.velocityX) > 50) {
@@ -826,6 +826,8 @@ class GameScene extends Phaser.Scene {
                     sprite.setTint(0xCCAAFF); // Return to normal purple tint
                 } else if (playerData.characterId === 'archer') {
                     sprite.setTint(0xAAFFAA); // Return to normal green tint
+                } else if (playerData.characterId === 'stickman') {
+                    sprite.setTint(0xFFFFAA); // Return to normal yellow tint
                 }
             });
         }
@@ -2377,7 +2379,7 @@ class GameScene extends Phaser.Scene {
         } else if (playerData.characterId === 'stickman') {
             // Create player body using Stickman sprite
             body = this.add.sprite(playerData.x, playerData.y, 'stickman-idle');
-            body.setScale(3); // Scale up the 32x32 sprite to be more visible
+            body.setScale(1.5); // Scale up the 64x64 sprite to be appropriate size
             body.play('stickman-idle'); // Start with idle animation
             
             // Set tint to maintain color identification (subtle yellow tint)
@@ -2500,6 +2502,8 @@ class GameScene extends Phaser.Scene {
                     player.body.play('blue-witch-death');
                 } else if (playerData.characterId === 'archer' && player.body.anims.currentAnim?.key !== 'archer-death') {
                     player.body.play('archer-death');
+                } else if (playerData.characterId === 'stickman' && player.body.anims.currentAnim?.key !== 'stickman-death') {
+                    player.body.play('stickman-death');
                 } else if (playerData.characterId === 'finn-human') {
                     // Finn doesn't have death animation yet, use idle
                     player.body.play('finn-idle');

@@ -23,6 +23,12 @@ class CharacterSelectScene extends Phaser.Scene {
             frameWidth: 32,
             frameHeight: 32  // Estimated frame size for Finn
         });
+        
+        // Load Blue_witch sprite sheet for preview
+        this.load.spritesheet('blue-witch-preview', 'assets/characters/Blue_witch/B_witch_idle.png', {
+            frameWidth: 32,
+            frameHeight: 32  // Estimated frame size for Blue_witch
+        });
     }
 
     create() {
@@ -55,13 +61,13 @@ class CharacterSelectScene extends Phaser.Scene {
                 hasSprite: true
             },
             {
-                id: 'blue-speedster',
-                name: 'Blue Speedster',
-                color: '#0000FF',
-                moveSpeed: 250,
-                jumpPower: -450,
-                description: 'Fast movement',
-                hasSprite: false
+                id: 'blue-witch',
+                name: 'Blue Witch',
+                color: '#6600CC',
+                moveSpeed: 180,
+                jumpPower: -520,
+                description: 'Magical spellcaster',
+                hasSprite: true
             },
             {
                 id: 'green-tank',
@@ -143,6 +149,16 @@ class CharacterSelectScene extends Phaser.Scene {
                 preview = this.add.sprite(x, y, 'finn-preview', 0); // Use frame 0 only
                 preview.setScale(2); // Scale up for better visibility
                 preview.setTint(0xAADDFF); // Light blue tint to match character color
+                
+                // Add border rectangle behind the sprite
+                border = this.add.rectangle(x, y, 60, 80, 0x000000);
+                border.setStrokeStyle(2, 0x000000);
+                border.setAlpha(0); // Make fill transparent, only show border
+                border.setDepth(preview.depth - 1); // Put border behind sprite
+            } else if (character.hasSprite && character.id === 'blue-witch') {
+                preview = this.add.sprite(x, y, 'blue-witch-preview', 0); // Use frame 0 only
+                preview.setScale(2.5); // Scale up for better visibility
+                preview.setTint(0xCCAAFF); // Light purple tint to match character color
                 
                 // Add border rectangle behind the sprite
                 border = this.add.rectangle(x, y, 60, 80, 0x000000);

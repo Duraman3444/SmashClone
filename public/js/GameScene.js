@@ -124,6 +124,38 @@ class GameScene extends Phaser.Scene {
             frameWidth: 32,
             frameHeight: 32  // Golden sword attack frames
         });
+        
+        // Load Blue_witch sprite sheets
+        Logger.log('GameScene preload - Loading Blue_witch sprites');
+        this.load.spritesheet('blue-witch-idle', 'assets/characters/Blue_witch/B_witch_idle.png', {
+            frameWidth: 32,
+            frameHeight: 32  // Estimated frame size for Blue_witch
+        });
+        
+        this.load.spritesheet('blue-witch-run', 'assets/characters/Blue_witch/B_witch_run.png', {
+            frameWidth: 32,
+            frameHeight: 32  // Blue_witch running frames
+        });
+        
+        this.load.spritesheet('blue-witch-attack', 'assets/characters/Blue_witch/B_witch_attack.png', {
+            frameWidth: 32,
+            frameHeight: 32  // Blue_witch regular attack frames
+        });
+        
+        this.load.spritesheet('blue-witch-charge', 'assets/characters/Blue_witch/B_witch_charge.png', {
+            frameWidth: 32,
+            frameHeight: 32  // Blue_witch special attack (charge) frames
+        });
+        
+        this.load.spritesheet('blue-witch-death', 'assets/characters/Blue_witch/B_witch_death.png', {
+            frameWidth: 32,
+            frameHeight: 32  // Blue_witch death frames
+        });
+        
+        this.load.spritesheet('blue-witch-damage', 'assets/characters/Blue_witch/B_witch_take_damage.png', {
+            frameWidth: 32,
+            frameHeight: 32  // Blue_witch damage frames
+        });
     }
 
     create() {
@@ -313,6 +345,77 @@ class GameScene extends Phaser.Scene {
         });
         
         Logger.log('Finn the Human animations created');
+        
+        // Create Blue_witch animations
+        Logger.log('Creating Blue_witch animations');
+        
+        // Blue_witch idle animation (assuming 4 frames)
+        this.anims.create({
+            key: 'blue-witch-idle',
+            frames: this.anims.generateFrameNumbers('blue-witch-idle', { 
+                start: 0, 
+                end: 3
+            }),
+            frameRate: 6,
+            repeat: -1
+        });
+        
+        // Blue_witch run animation (assuming 6 frames)
+        this.anims.create({
+            key: 'blue-witch-run',
+            frames: this.anims.generateFrameNumbers('blue-witch-run', { 
+                start: 0, 
+                end: 5
+            }),
+            frameRate: 10,
+            repeat: -1
+        });
+        
+        // Blue_witch regular attack animation (assuming 8 frames)
+        this.anims.create({
+            key: 'blue-witch-attack',
+            frames: this.anims.generateFrameNumbers('blue-witch-attack', { 
+                start: 0, 
+                end: 7
+            }),
+            frameRate: 12,
+            repeat: 0
+        });
+        
+        // Blue_witch special attack (charge) animation (assuming 6 frames)
+        this.anims.create({
+            key: 'blue-witch-charge',
+            frames: this.anims.generateFrameNumbers('blue-witch-charge', { 
+                start: 0, 
+                end: 5
+            }),
+            frameRate: 8,
+            repeat: 0
+        });
+        
+        // Blue_witch death animation (assuming 8 frames)
+        this.anims.create({
+            key: 'blue-witch-death',
+            frames: this.anims.generateFrameNumbers('blue-witch-death', { 
+                start: 0, 
+                end: 7
+            }),
+            frameRate: 6,
+            repeat: 0
+        });
+        
+        // Blue_witch damage animation (assuming 4 frames)
+        this.anims.create({
+            key: 'blue-witch-damage',
+            frames: this.anims.generateFrameNumbers('blue-witch-damage', { 
+                start: 0, 
+                end: 3
+            }),
+            frameRate: 10,
+            repeat: 0
+        });
+        
+        Logger.log('Blue_witch animations created');
     }
     
     // Update sprite animations based on character state
@@ -384,6 +487,28 @@ class GameScene extends Phaser.Scene {
             } else {
                 targetAnimation = 'finn-idle';
             }
+        } else if (playerData.characterId === 'blue-witch') {
+            // Blue_witch animations
+            targetAnimation = 'blue-witch-idle';
+            
+            // Priority order: Death > Attack > Block > Jump > Run > Idle
+            if (playerData.eliminated) {
+                targetAnimation = 'blue-witch-death';
+            } else if (playerData.isAttacking) {
+                if (playerData.attackType === 'special') {
+                    targetAnimation = 'blue-witch-charge'; // Charge animation for special attacks
+                } else {
+                    targetAnimation = 'blue-witch-attack'; // Regular attack animation
+                }
+            } else if (playerData.isBlocking) {
+                targetAnimation = 'STOP_ANIMATION'; // Stop animation when blocking
+            } else if (!playerData.isGrounded) {
+                targetAnimation = 'STOP_ANIMATION'; // Stop animation when jumping
+            } else if (Math.abs(playerData.velocityX) > 50) {
+                targetAnimation = 'blue-witch-run'; // Use run animation when moving
+            } else {
+                targetAnimation = 'blue-witch-idle';
+            }
         } else {
             // Default fallback
             return;
@@ -424,6 +549,8 @@ class GameScene extends Phaser.Scene {
                     sprite.setTint(0xFFAAAA); // Return to normal red tint
                 } else if (playerData.characterId === 'finn-human') {
                     sprite.setTint(0xAADDFF); // Return to normal blue tint
+                } else if (playerData.characterId === 'blue-witch') {
+                    sprite.setTint(0xCCAAFF); // Return to normal purple tint
                 }
             });
         }
@@ -1908,6 +2035,38 @@ class GameScene extends Phaser.Scene {
             });
             
             Logger.log('Created Finn the Human sprite for finn-human');
+        } else if (playerData.characterId === 'blue-witch') {
+            // Create player body using Blue_witch sprite
+            body = this.add.sprite(playerData.x, playerData.y, 'blue-witch-idle');
+            body.setScale(2.5); // Scale up the 32x32 sprite to be more visible
+            body.play('blue-witch-idle'); // Start with idle animation
+            
+            // Set tint to maintain color identification (subtle purple tint)
+            body.setTint(0xCCAAFF); // Light purple tint
+            
+            // Add event listener for when attack animations complete
+            body.on('animationcomplete', (animation, frame) => {
+                if (animation.key.includes('attack') || animation.key.includes('charge')) {
+                    // Attack animation completed, clear the attack state
+                    const playerCooldown = this.attackCooldowns[playerId];
+                    const playerData = this.localPlayers[playerId];
+                    
+                    if (playerCooldown) {
+                        playerCooldown.isInAttack = false;
+                    }
+                    
+                    if (playerData && !playerData.eliminated) {
+                        playerData.isAttacking = false;
+                        playerData.attackType = null;
+                        playerData.attackDirection = null;
+                        this.updatePlayer(playerId, playerData);
+                    }
+                    
+                    Logger.log(`${playerId} attack animation completed - can attack again`);
+                }
+            });
+            
+            Logger.log('Created Blue_witch sprite for blue-witch');
         } else {
             // Create player body (colored rectangle) for other characters
             body = this.add.rectangle(playerData.x, playerData.y, playerData.width, playerData.height, playerData.color);
@@ -1917,7 +2076,7 @@ class GameScene extends Phaser.Scene {
         // Create eyes for placeholder characters (but not sprites)
         let leftEye = null;
         let rightEye = null;
-        if (playerData.characterId !== 'red-fighter' && playerData.characterId !== 'finn-human') {
+        if (playerData.characterId !== 'red-fighter' && playerData.characterId !== 'finn-human' && playerData.characterId !== 'blue-witch') {
             leftEye = this.add.circle(
                 playerData.x - 8,
                 playerData.y - 10,
@@ -1980,7 +2139,7 @@ class GameScene extends Phaser.Scene {
             attackIndicator: attackIndicator,
             originalColor: playerData.color, // Store original color
             data: playerData,
-            isSprite: playerData.characterId === 'red-fighter' || playerData.characterId === 'finn-human' // Flag to track if this is a sprite
+            isSprite: playerData.characterId === 'red-fighter' || playerData.characterId === 'finn-human' || playerData.characterId === 'blue-witch' // Flag to track if this is a sprite
         };
         
         Logger.log('Player created successfully');
@@ -1996,8 +2155,13 @@ class GameScene extends Phaser.Scene {
             
             if (player.isSprite) {
                 // For sprites, play death animation
-                if (player.body.anims.currentAnim?.key !== 'meow-knight-death') {
+                if (playerData.characterId === 'red-fighter' && player.body.anims.currentAnim?.key !== 'meow-knight-death') {
                     player.body.play('meow-knight-death');
+                } else if (playerData.characterId === 'blue-witch' && player.body.anims.currentAnim?.key !== 'blue-witch-death') {
+                    player.body.play('blue-witch-death');
+                } else if (playerData.characterId === 'finn-human') {
+                    // Finn doesn't have death animation yet, use idle
+                    player.body.play('finn-idle');
                 }
             } else {
                 // For rectangles, gray out
@@ -2029,7 +2193,9 @@ class GameScene extends Phaser.Scene {
         // Handle sprite positioning adjustments for different animation frame sizes
         if (player.isSprite && playerData.isAttacking && playerData.attackType === 'special') {
             // Special attack animation - move the character 3 paces in the attack direction
-            const scaleMultiplier = playerData.characterId === 'red-fighter' ? 4 : 3; // Different scale for different characters
+            const scaleMultiplier = playerData.characterId === 'red-fighter' ? 4 : 
+                                   playerData.characterId === 'finn-human' ? 3 : 
+                                   playerData.characterId === 'blue-witch' ? 2.5 : 3; // Different scale for different characters
             const pacesOffset = 3 * 16; // 3 paces, each pace is 16 pixels
             
             let offsetX = 0;
@@ -2097,7 +2263,9 @@ class GameScene extends Phaser.Scene {
             
             // Account for sprite position offset during special attacks
             if (player.isSprite && playerData.attackType === 'special') {
-                const scaleMultiplier = playerData.characterId === 'red-fighter' ? 4 : 3; // Different scale for different characters
+                const scaleMultiplier = playerData.characterId === 'red-fighter' ? 4 : 
+                                       playerData.characterId === 'finn-human' ? 3 : 
+                                       playerData.characterId === 'blue-witch' ? 2.5 : 3; // Different scale for different characters
                 const pacesOffset = 3 * 16; // 3 paces, each pace is 16 pixels
                 
                 // Calculate the same position where the sprite is actually displayed

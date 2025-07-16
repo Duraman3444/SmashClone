@@ -7,6 +7,8 @@ class NetworkManager {
         this.gameEndCallbacks = [];
         this.connectionCallbacks = [];
         this.roomListCallbacks = [];
+        this.battleRoomCallbacks = [];
+        this.battleStartCallbacks = [];
         this.roomId = 'default';
     }
 
@@ -65,6 +67,14 @@ class NetworkManager {
 
         this.socket.on('roomJoined', (roomData) => {
             Logger.log('Joined room:', roomData);
+        });
+
+        this.socket.on('battleRoomUpdate', (data) => {
+            this.battleRoomCallbacks.forEach(callback => callback(data));
+        });
+
+        this.socket.on('battleStart', (data) => {
+            this.battleStartCallbacks.forEach(callback => callback(data));
         });
     }
 
@@ -143,6 +153,46 @@ class NetworkManager {
 
     onRoomListUpdate(callback) {
         this.roomListCallbacks.push(callback);
+    }
+
+    // Battle room methods
+    joinBattleRoom(roomId) {
+        if (this.socket && this.connected) {
+            this.roomId = roomId;
+            this.socket.emit('joinBattleRoom', roomId);
+        }
+    }
+
+    leaveBattleRoom() {
+        if (this.socket && this.connected) {
+            this.socket.emit('leaveBattleRoom');
+        }
+    }
+
+    sendCharacterSelection(character) {
+        if (this.socket && this.connected) {
+            this.socket.emit('selectCharacter', character);
+        }
+    }
+
+    sendReadyStatus(ready) {
+        if (this.socket && this.connected) {
+            this.socket.emit('setReady', ready);
+        }
+    }
+
+    startBattle() {
+        if (this.socket && this.connected) {
+            this.socket.emit('startBattle');
+        }
+    }
+
+    onBattleRoomUpdate(callback) {
+        this.battleRoomCallbacks.push(callback);
+    }
+
+    onBattleStart(callback) {
+        this.battleStartCallbacks.push(callback);
     }
 
 } 

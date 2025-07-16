@@ -178,22 +178,29 @@ class RoomLobbyScene extends Phaser.Scene {
     }
     
     joinRoom(roomId) {
-        Logger.log('Joining room:', roomId);
+        Logger.log('Joining battle room:', roomId);
         
         // Show connecting message
-        this.showConnectingMessage('Joining room...');
+        this.showConnectingMessage('Joining battle room...');
         
-        this.networkManager.joinRoom(roomId, this.selectedCharacter);
-        
-        // Start game scene
+        // Start battle room scene
         this.time.delayedCall(1000, () => {
             this.cleanup();
-            this.scene.start('GameScene', {
-                mode: 'multiplayer',
-                selectedCharacters: { player1: this.selectedCharacter },
-                roomId: roomId
+            this.scene.start('BattleRoomScene', {
+                roomId: roomId,
+                roomName: this.getRoomName(roomId)
             });
         });
+    }
+
+    getRoomName(roomId) {
+        // Find room name from the rooms list
+        for (const room of this.rooms) {
+            if (room.id === roomId) {
+                return room.name;
+            }
+        }
+        return 'Battle Room';
     }
     
     connectToServer() {
@@ -235,6 +242,9 @@ class RoomLobbyScene extends Phaser.Scene {
     }
     
     updateRoomList(rooms) {
+        // Store rooms for later lookup
+        this.rooms = rooms;
+        
         // Clear existing room list
         this.roomListContainer.removeAll(true);
         

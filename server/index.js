@@ -19,7 +19,9 @@ app.use(cors());
 
 // Game state management
 const GameRoom = require('./game/GameRoom');
+const BattleRoom = require('./game/BattleRoom');
 const rooms = new Map();
+const battleRooms = new Map();
 
 // Socket.io connection handling
 io.on('connection', (socket) => {
@@ -94,10 +96,65 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Battle room handlers
+  socket.on('joinBattleRoom', (roomId) => {
+    if (!battleRooms.has(roomId)) {
+      battleRooms.set(roomId, new BattleRoom(roomId, io));
+    }
+    
+    const battleRoom = battleRooms.get(roomId);
+    const success = battleRoom.addPlayer(socket);
+    
+    if (success) {
+      socket.join(roomId);
+      socket.battleRoomId = roomId;
+      console.log(`Player ${socket.id} joined battle room ${roomId}`);
+    } else {
+      socket.emit('battleRoomFull');
+    }
+  });
+
+  socket.on('leaveBattleRoom', () => {
+    if (socket.battleRoomId && battleRooms.has(socket.battleRoomId)) {
+      const battleRoom = battleRooms.get(socket.battleRoomId);
+      battleRoom.removePlayer(socket.id);
+      
+      socket.leave(socket.battleRoomId);
+      
+      if (battleRoom.isEmpty()) {
+        battleRooms.delete(socket.battleRoomId);
+      }
+      
+      socket.battleRoomId = null;
+    }
+  });
+
+  socket.on('selectCharacter', (character) => {
+    if (socket.battleRoomId && battleRooms.has(socket.battleRoomId)) {
+      const battleRoom = battleRooms.get(socket.battleRoomId);
+      battleRoom.setPlayerCharacter(socket.id, character);
+    }
+  });
+
+  socket.on('setReady', (ready) => {
+    if (socket.battleRoomId && battleRooms.has(socket.battleRoomId)) {
+      const battleRoom = battleRooms.get(socket.battleRoomId);
+      battleRoom.setPlayerReady(socket.id, ready);
+    }
+  });
+
+  socket.on('startBattle', () => {
+    if (socket.battleRoomId && battleRooms.has(socket.battleRoomId)) {
+      const battleRoom = battleRooms.get(socket.battleRoomId);
+      battleRoom.startBattle();
+    }
+  });
+
   // Handle disconnect
   socket.on('disconnect', () => {
     console.log('Player disconnected:', socket.id);
     
+    // Clean up regular game rooms
     if (socket.roomId && rooms.has(socket.roomId)) {
       const room = rooms.get(socket.roomId);
       room.removePlayer(socket.id);
@@ -105,6 +162,17 @@ io.on('connection', (socket) => {
       // Clean up empty rooms
       if (room.isEmpty()) {
         rooms.delete(socket.roomId);
+      }
+    }
+    
+    // Clean up battle rooms
+    if (socket.battleRoomId && battleRooms.has(socket.battleRoomId)) {
+      const battleRoom = battleRooms.get(socket.battleRoomId);
+      battleRoom.removePlayer(socket.id);
+      
+      // Clean up empty battle rooms
+      if (battleRoom.isEmpty()) {
+        battleRooms.delete(socket.battleRoomId);
       }
     }
   });

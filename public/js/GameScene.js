@@ -821,8 +821,8 @@ class GameScene extends Phaser.Scene {
         // Handle Pixel Bot animations separately (programmatic)
         if (targetAnimation && targetAnimation.includes('pixel-bot')) {
             this.animatePixelBot(sprite, targetAnimation);
-        } else {
-            // Handle regular sprite animations
+        } else if (sprite.anims) {
+            // Handle regular sprite animations (only if anims exists)
             const currentAnimKey = sprite.anims.currentAnim?.key;
             const isCurrentlyPlaying = sprite.anims.isPlaying;
             
@@ -1215,7 +1215,7 @@ class GameScene extends Phaser.Scene {
         
         // Check if attack animation is currently playing (for sprite characters)
         const player = this.players[playerId];
-        if (player && player.isSprite && player.body.anims.currentAnim?.key.includes('attack') && player.body.anims.isPlaying) {
+        if (player && player.isSprite && player.body.anims && player.body.anims.currentAnim?.key.includes('attack') && player.body.anims.isPlaying) {
             Logger.log(`${playerId} attack blocked - attack animation still playing`);
             return;
         }
@@ -2677,18 +2677,18 @@ class GameScene extends Phaser.Scene {
             
             if (player.isSprite) {
                 // For sprites, play death animation
-                if (playerData.characterId === 'red-fighter' && player.body.anims.currentAnim?.key !== 'meow-knight-death') {
+                if (playerData.characterId === 'red-fighter' && player.body.anims && player.body.anims.currentAnim?.key !== 'meow-knight-death') {
                     player.body.play('meow-knight-death');
-                } else if (playerData.characterId === 'blue-witch' && player.body.anims.currentAnim?.key !== 'blue-witch-death') {
+                } else if (playerData.characterId === 'blue-witch' && player.body.anims && player.body.anims.currentAnim?.key !== 'blue-witch-death') {
                     player.body.play('blue-witch-death');
-                } else if (playerData.characterId === 'archer' && player.body.anims.currentAnim?.key !== 'archer-death') {
+                } else if (playerData.characterId === 'archer' && player.body.anims && player.body.anims.currentAnim?.key !== 'archer-death') {
                     player.body.play('archer-death');
-                } else if (playerData.characterId === 'stickman' && player.body.anims.currentAnim?.key !== 'stickman-death') {
+                } else if (playerData.characterId === 'stickman' && player.body.anims && player.body.anims.currentAnim?.key !== 'stickman-death') {
                     player.body.play('stickman-death');
                 } else if (playerData.characterId === 'pixel-bot') {
                     // Pixel Bot death animation - change colors to gray
                     this.animatePixelBotDeath(player.body);
-                } else if (playerData.characterId === 'finn-human') {
+                } else if (playerData.characterId === 'finn-human' && player.body.anims) {
                     // Finn doesn't have death animation yet, use idle
                     player.body.play('finn-idle');
                 }

@@ -883,10 +883,6 @@ class GameScene extends Phaser.Scene {
             if(connected){
                 this.myPlayerId = this.networkManager.getPlayerId();
                 connectingText.setText('Connected! Waiting for game state...');
-                
-                // Send selected character to server (use player1's character for now)
-                const selectedCharacter = this.selectedCharacters.player1;
-                this.networkManager.joinRoom('default', selectedCharacter);
             }
         });
         

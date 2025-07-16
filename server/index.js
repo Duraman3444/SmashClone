@@ -26,21 +26,20 @@ io.on('connection', (socket) => {
   console.log('Player connected:', socket.id);
 
   // Join or create room
-  socket.on('joinRoom', (data) => {
-    const roomId = data.roomId || 'default';
-    const selectedCharacter = data.selectedCharacter || null;
+  socket.on('joinRoom', (roomId) => {
+    if (!roomId) roomId = 'default';
     
     if (!rooms.has(roomId)) {
       rooms.set(roomId, new GameRoom(roomId, io));
     }
     
     const room = rooms.get(roomId);
-    const success = room.addPlayer(socket, selectedCharacter);
+    const success = room.addPlayer(socket);
     
     if (success) {
       socket.join(roomId);
       socket.roomId = roomId;
-      console.log(`Player ${socket.id} joined room ${roomId} with character:`, selectedCharacter?.name || 'Default');
+      console.log(`Player ${socket.id} joined room ${roomId}`);
     } else {
       socket.emit('roomFull');
     }

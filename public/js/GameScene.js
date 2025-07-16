@@ -11,6 +11,7 @@ class GameScene extends Phaser.Scene {
     init(data) {
         Logger.log('GameScene initialized with data:', data);
         this.mode = data.mode || 'local';
+        this.roomId = data.roomId; // Store room ID for multiplayer
         this.selectedCharacters = data.selectedCharacters || {
             player1: {
                 id: 'red-fighter',
@@ -31,7 +32,7 @@ class GameScene extends Phaser.Scene {
         };
         
         Logger.log('Selected characters:', this.selectedCharacters);
-        Logger.log('GameScene init with mode', this.mode);
+        Logger.log('GameScene init with mode', this.mode, 'roomId:', this.roomId);
         if(this.mode === 'multiplayer'){
             this.networkManager = new NetworkManager();
             this.inputManager = new InputManager(this.networkManager);
@@ -883,13 +884,23 @@ class GameScene extends Phaser.Scene {
             if(connected){
                 this.myPlayerId = this.networkManager.getPlayerId();
                 connectingText.setText('Connected! Waiting for game state...');
+                
+                // Join room with selected character
+                const selectedCharacter = this.selectedCharacters.player1;
+                this.networkManager.joinRoom(this.roomId || 'default', selectedCharacter);
             }
         });
         
         this.networkManager.onGameStateUpdate((state)=>{
             Logger.log('Game state received, hiding connecting text');
             connectingText.setVisible(false);
-            this.updateGameState(state);
+            
+            // Initialize local players for multiplayer if not already done
+            if (!this.localPlayers) {
+                this.localPlayers = {};
+            }
+            
+            this.updateMultiplayerGameState(state);
         });
         
         this.networkManager.onGameEnd((data)=>{ 
@@ -2275,6 +2286,65 @@ class GameScene extends Phaser.Scene {
         
         // Update UI
         this.updateUI();
+    }
+
+    updateMultiplayerGameState(gameState) {
+        Logger.log('Updating multiplayer game state with character mapping');
+        
+        // Update or create players with proper character mapping
+        Object.keys(gameState.players).forEach(playerId => {
+            const serverPlayerData = gameState.players[playerId];
+            
+            // Map server data to proper character data
+            const characterData = this.mapServerToCharacterData(serverPlayerData);
+            
+            if (!this.players[playerId]) {
+                this.createPlayer(playerId, characterData);
+            } else {
+                this.updatePlayer(playerId, characterData);
+            }
+            
+            // Update localPlayers for UI compatibility
+            this.localPlayers[playerId] = {
+                ...characterData,
+                eliminated: characterData.lives <= 0
+            };
+        });
+        
+        // Remove disconnected players
+        Object.keys(this.players).forEach(playerId => {
+            if (!gameState.players[playerId]) {
+                this.removePlayer(playerId);
+                if (this.localPlayers[playerId]) {
+                    delete this.localPlayers[playerId];
+                }
+            }
+        });
+        
+        // Update UI
+        this.updateUI();
+    }
+
+    mapServerToCharacterData(serverData) {
+        // If server has character info, use it; otherwise, use selected character
+        let characterInfo;
+        
+        if (serverData.character) {
+            characterInfo = serverData.character;
+        } else {
+            // Fallback to selected character for this client
+            characterInfo = this.selectedCharacters.player1;
+        }
+        
+        return {
+            ...serverData,
+            characterId: characterInfo.id,
+            characterName: characterInfo.name,
+            moveSpeed: characterInfo.moveSpeed || 200,
+            jumpPower: characterInfo.jumpPower || -500,
+            color: characterInfo.color || serverData.color,
+            originalColor: characterInfo.color || serverData.color
+        };
     }
 
     createPlayer(playerId, playerData) {

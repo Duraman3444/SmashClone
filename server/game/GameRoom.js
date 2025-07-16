@@ -36,13 +36,17 @@ class GameRoom {
       velocityY: 0,
       health: 0, // Damage percentage (0-999)
       lives: 3,
-      color: playerColor,
+      color: character ? character.color : playerColor,
       isGrounded: false,
       isAttacking: false,
       facingRight: true,
       width: 40,
       height: 60,
-      character: character // Store selected character info
+      character: character, // Store selected character info
+      characterId: character ? character.id : 'default',
+      characterName: character ? character.name : 'Player',
+      moveSpeed: character ? character.moveSpeed || 200 : 200,
+      jumpPower: character ? character.jumpPower || -500 : -500
     };
 
     this.players.set(socket.id, player);

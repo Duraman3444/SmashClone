@@ -6,6 +6,7 @@ class NetworkManager {
         this.gameStateCallbacks = [];
         this.gameEndCallbacks = [];
         this.connectionCallbacks = [];
+        this.roomListCallbacks = [];
         this.roomId = 'default';
     }
 
@@ -53,12 +54,27 @@ class NetworkManager {
             console.log('Reconnected to server');
             this.joinRoom(this.roomId);
         });
+
+        this.socket.on('roomList', (rooms) => {
+            this.roomListCallbacks.forEach(callback => callback(rooms));
+        });
+
+        this.socket.on('roomCreated', (roomData) => {
+            Logger.log('Room created:', roomData);
+        });
+
+        this.socket.on('roomJoined', (roomData) => {
+            Logger.log('Joined room:', roomData);
+        });
     }
 
-    joinRoom(roomId) {
+    joinRoom(roomId, selectedCharacter = null) {
         if (this.socket && this.connected) {
             this.roomId = roomId;
-            this.socket.emit('joinRoom', roomId);
+            const joinData = selectedCharacter ? 
+                { roomId, character: selectedCharacter } : 
+                roomId;
+            this.socket.emit('joinRoom', joinData);
         }
     }
 
@@ -107,4 +123,26 @@ class NetworkManager {
             this.socket.disconnect();
         }
     }
+
+    // Room management methods
+    createRoom(roomId, roomName, selectedCharacter) {
+        if (this.socket && this.connected) {
+            this.socket.emit('createRoom', { 
+                roomId, 
+                roomName, 
+                character: selectedCharacter 
+            });
+        }
+    }
+
+    requestRoomList() {
+        if (this.socket && this.connected) {
+            this.socket.emit('requestRoomList');
+        }
+    }
+
+    onRoomListUpdate(callback) {
+        this.roomListCallbacks.push(callback);
+    }
+
 } 

@@ -1,6 +1,7 @@
 class GameRoom {
   constructor(roomId, io) {
     this.roomId = roomId;
+    this.name = roomId; // Default name is the room ID
     this.io = io;
     this.players = new Map();
     this.gameState = {
@@ -17,7 +18,7 @@ class GameRoom {
     this.usedColors = new Set();
   }
 
-  addPlayer(socket) {
+  addPlayer(socket, character = null) {
     if (this.players.size >= this.maxPlayers) {
       return false;
     }
@@ -40,7 +41,8 @@ class GameRoom {
       isAttacking: false,
       facingRight: true,
       width: 40,
-      height: 60
+      height: 60,
+      character: character // Store selected character info
     };
 
     this.players.set(socket.id, player);

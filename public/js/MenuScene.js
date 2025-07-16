@@ -24,7 +24,7 @@ class MenuScene extends Phaser.Scene {
         
         multiBtn.on('pointerdown', ()=>{
             Logger.log('Online multiplayer selected');
-            this.scene.start('CharacterSelectScene', { mode:'multiplayer' });
+            this.scene.start('CharacterSelectScene', { mode:'multiplayer', showRoomLobby: true });
         });
         
         // Add instruction text

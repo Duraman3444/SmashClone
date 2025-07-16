@@ -595,10 +595,21 @@ class CharacterSelectScene extends Phaser.Scene {
     startGame() {
         Logger.log('Starting game with selected characters');
         
-        // Pass selected characters to GameScene
-        this.scene.start('GameScene', {
-            mode: this.gameMode,
-            selectedCharacters: this.selectedCharacters
-        });
+        // Check if we should go to room lobby for multiplayer
+        if (this.gameMode === 'multiplayer' && this.data && this.data.showRoomLobby) {
+            // For multiplayer, go to room lobby with selected character
+            if (this.selectedCharacters.player1) {
+                Logger.log('Going to room lobby with character:', this.selectedCharacters.player1);
+                this.scene.start('RoomLobbyScene', {
+                    selectedCharacter: this.selectedCharacters.player1
+                });
+            }
+        } else {
+            // For local multiplayer or direct multiplayer, start game directly
+            this.scene.start('GameScene', {
+                mode: this.gameMode,
+                selectedCharacters: this.selectedCharacters
+            });
+        }
     }
 } 

@@ -17,20 +17,29 @@ class GameRoom {
     this.usedColors = new Set();
   }
 
-  addPlayer(socket) {
+  addPlayer(socket, selectedCharacter = null) {
     if (this.players.size >= this.maxPlayers) {
       return false;
     }
 
-    // Assign a color to the player
+    // Use selected character or default
+    const character = selectedCharacter || {
+      id: 'green-tank',
+      name: 'Green Tank',
+      color: '#00FF00',
+      moveSpeed: 150,
+      jumpPower: -400
+    };
+
+    // Assign a color to the player (use character color if available)
     const availableColors = this.characterColors.filter(color => !this.usedColors.has(color));
-    const playerColor = availableColors[0];
+    const playerColor = character.color || availableColors[0];
     this.usedColors.add(playerColor);
 
     const player = {
       id: socket.id,
       x: 400 + (this.players.size * 100), // Spawn positions
-      y: 300,
+      y: 200, // Start higher so they fall to ground
       velocityX: 0,
       velocityY: 0,
       health: 0, // Damage percentage (0-999)
@@ -38,9 +47,22 @@ class GameRoom {
       color: playerColor,
       isGrounded: false,
       isAttacking: false,
+      isBlocking: false,
+      isDodging: false,
       facingRight: true,
       width: 40,
-      height: 60
+      height: 60,
+      // Character-specific properties
+      characterId: character.id,
+      characterName: character.name,
+      moveSpeed: character.moveSpeed || 200,
+      jumpPower: character.jumpPower || -500,
+      attackType: null,
+      attackDirection: null,
+      eliminated: false,
+      canJump: true,
+      shieldHealth: 100,
+      shieldRegenTime: 0
     };
 
     this.players.set(socket.id, player);
@@ -80,6 +102,7 @@ class GameRoom {
     // Handle different input types
     if (inputData.type === 'move') {
       this.handleMovement(player, inputData);
+      this.handleBlocking(player, inputData);
     } else if (inputData.type === 'attack') {
       this.handleAttack(player, inputData);
     } else if (inputData.type === 'jump') {
@@ -88,7 +111,7 @@ class GameRoom {
   }
 
   handleMovement(player, inputData) {
-    const moveSpeed = 200; // pixels per second
+    const moveSpeed = player.moveSpeed || 200; // Use character-specific speed
     const deltaTime = 1 / this.tickRate;
     
     if (inputData.left) {
@@ -104,8 +127,19 @@ class GameRoom {
 
   handleJump(player, inputData) {
     if (inputData.jump && player.isGrounded) {
-      player.velocityY = -400; // Jump strength
+      player.velocityY = player.jumpPower || -400; // Use character-specific jump power
       player.isGrounded = false;
+      player.canJump = false;
+    }
+  }
+
+  handleBlocking(player, inputData) {
+    // Update blocking state based on input
+    player.isBlocking = inputData.block || false;
+    
+    // Regenerate shield when not blocking
+    if (!player.isBlocking && player.shieldHealth < 100) {
+      player.shieldHealth = Math.min(100, player.shieldHealth + 1);
     }
   }
 
@@ -142,14 +176,33 @@ class GameRoom {
   }
 
   applyDamage(target, attacker, damage) {
-    target.health += damage;
-    
-    // Apply knockback based on damage percentage
-    const knockbackStrength = Math.min(target.health * 3, 600);
-    const knockbackDirection = target.x > attacker.x ? 1 : -1;
-    
-    target.velocityX = knockbackDirection * knockbackStrength;
-    target.velocityY = -knockbackStrength * 0.5;
+    // Check if target is blocking
+    if (target.isBlocking && target.shieldHealth > 0) {
+      // Reduce shield health instead of player health
+      target.shieldHealth = Math.max(0, target.shieldHealth - damage);
+      
+      // Reduced knockback when blocking
+      const knockbackStrength = Math.min(damage * 2, 200);
+      const knockbackDirection = target.x > attacker.x ? 1 : -1;
+      
+      target.velocityX = knockbackDirection * knockbackStrength * 0.3;
+      target.velocityY = -knockbackStrength * 0.2;
+      
+      // If shield is broken, add some health damage
+      if (target.shieldHealth <= 0) {
+        target.health += damage * 0.5;
+      }
+    } else {
+      // Normal damage
+      target.health += damage;
+      
+      // Apply knockback based on damage percentage
+      const knockbackStrength = Math.min(target.health * 3, 600);
+      const knockbackDirection = target.x > attacker.x ? 1 : -1;
+      
+      target.velocityX = knockbackDirection * knockbackStrength;
+      target.velocityY = -knockbackStrength * 0.5;
+    }
     
     // Check if player is KO'd (knocked off screen)
     if (target.health > 150) {
@@ -179,6 +232,7 @@ class GameRoom {
         player.y = groundY - player.height;
         player.velocityY = 0;
         player.isGrounded = true;
+        player.canJump = true;
       }
       
       // Keep player on stage (for now)
@@ -200,11 +254,18 @@ class GameRoom {
   respawnPlayer(player) {
     player.lives--;
     player.health = 0;
+    player.shieldHealth = 100; // Restore shield
     player.x = 400;
     player.y = 200;
     player.velocityX = 0;
     player.velocityY = 0;
     player.isGrounded = false;
+    player.canJump = true;
+    player.isAttacking = false;
+    player.isBlocking = false;
+    player.isDodging = false;
+    player.attackType = null;
+    player.attackDirection = null;
     
     if (player.lives <= 0) {
       // Player is eliminated

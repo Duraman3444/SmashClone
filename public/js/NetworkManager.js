@@ -18,8 +18,7 @@ class NetworkManager {
             this.connected = true;
             this.playerId = this.socket.id;
             
-            // Join default room
-            this.joinRoom(this.roomId);
+            // Don't auto-join room here - let the game scene handle it with character selection
             
             // Notify connection callbacks
             this.connectionCallbacks.forEach(callback => callback(true));
@@ -55,10 +54,13 @@ class NetworkManager {
         });
     }
 
-    joinRoom(roomId) {
+    joinRoom(roomId, selectedCharacter = null) {
         if (this.socket && this.connected) {
             this.roomId = roomId;
-            this.socket.emit('joinRoom', roomId);
+            this.socket.emit('joinRoom', {
+                roomId: roomId,
+                selectedCharacter: selectedCharacter
+            });
         }
     }
 
